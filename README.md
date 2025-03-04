@@ -5,6 +5,8 @@ This is an **in-progress** repository for assessing large language models' abili
 > **Why is this interesting?**  
 > Diplomacy is a classic game of negotiation and balance of power that poses unique challenges in both strategy and communication. We test if modern LLMs can reason about alliances, plan multi-stage maneuvers, and negotiate effectively—**zero-shot**. Surprisingly, some models exhibit coherent strategic thinking and can form (and break) alliances in ways that mirror human play.
 
+https://github.com/user-attachments/assets/6a307cec-a889-4d57-a2e0-fbc9e94f63b9
+
 ## Overview
 
 The codebase uses:
