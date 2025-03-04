@@ -3,19 +3,34 @@
 This is an **in-progress** repository for assessing large language models' ability to play **full press Diplomacy** (i.e., with open negotiations and alliances) against other AI agents. The goal is to explore how LLMs reason, negotiate, ally, and betray in a highly strategic environment—**no pre-existing specialized training** for Diplomacy, just plain LLM reasoning.
 
 > **Why is this interesting?**  
-> Diplomacy is a classic game of negotiation and balance of power that poses unique challenges in both strategy and communication. We test if modern LLMs can reason about alliances, plan multi-stage maneuvers, and negotiate effectively—**zero-shot**. Surprisingly, some models exhibit coherent strategic thinking and can form (and break) alliances in ways that mirror human play.
+> Diplomacy is a classic game of negotiation and balance of power that poses unique challenges in both strategy and communication. It's an interesting test-bed for game theory and complex decision making.
+
+We test if modern LLMs can reason about alliances, plan multi-stage maneuvers, and negotiate effectively—**zero-shot**. Surprisingly, some models exhibit coherent strategic thinking and can form (and break) alliances in ways that mirror human play.
+
+Here's a game with sonnet-3.7 playing as Austria (the red player), reaching the win condition after :
 
 https://github.com/user-attachments/assets/6a307cec-a889-4d57-a2e0-fbc9e94f63b9
 
 ## Overview
 
-The codebase uses:
-1. The [python-diplomacy](https://github.com/boardgamers/diplomacy) package for the **Diplomacy** game engine (adjudication, movement, supply center tracking, etc.).
-2. A **no-press reinforcement learning policy** for recommended moves, borrowed and adapted from [welfare_diplomacy_baselines](https://github.com/hannaherlebach/welfare_diplomacy_baselines). This policy acts as a strategic hint to the LLM (only provided during the negotiation phase), which it may or may not follow. The main purpose of the RL policy's move suggestions is to help the baseline AIs to play more competitively, and avoid the otherwise common stalemates. This can be disabled if you prefer to see the LLMs play with only their natural wits.
+### Game Structure
+
+In our test setup, games are run for up to 50 game-years, with a 4-round negotiation phase before each movement turn. The test model we are examining always plays as Austria (AUT), which has a challenging centre start. The competing models are all powered by gemini-2.0-flash-001 and given a character card for personality & play style.
 
 Each **Power** (e.g., France, England, Germany) is controlled by a separate LLM. These LLMs communicate and negotiate with each other through short messages (the “press” or “missives”) multiple times each turn, then decide on final orders (moves). The game engine processes these orders, updates the board state, and continues until the game ends.
 
-In our test setup, the test model we are examining always plays as Austria (AUT), which has a challenging centre start. The competing models are all powered by gemini-2.0-flash-001 and given a character card for personality & play style.
+
+## Sample Game Reports
+
+Note that these are just single games, so may not be representative of averaged performance over many trials. There will be significant variance of outcomes between games. From my testing, these samples are *roughly* indicative of how these models play. The negotiation logs give interesting insight into their different styles of negotiating.
+
+http://eqbench.com/results/diplomacy/claude-3.7-sonnet-1.54.html
+http://eqbench.com/results/diplomacy/deepseek-r1-1.56.html
+http://eqbench.com/results/diplomacy/gemini-2.0-flash-001-1.51.html
+http://eqbench.com/results/diplomacy/gpt-4o-mini-1.43.html
+http://eqbench.com/results/diplomacy/o1-1.31.html
+http://eqbench.com/results/diplomacy/o3-mini-high-1.45.html
+
 
 ---
 
@@ -125,6 +140,10 @@ In our test setup, the test model we are examining always plays as Austria (AUT)
 ---
 
 ## Credits
+
+The codebase uses:
+1. The [python-diplomacy](https://github.com/boardgamers/diplomacy) package for the **Diplomacy** game engine (adjudication, movement, supply center tracking, etc.).
+2. A **no-press reinforcement learning policy** for recommended moves, borrowed and adapted from [welfare_diplomacy_baselines](https://github.com/hannaherlebach/welfare_diplomacy_baselines). This policy acts as a strategic hint to the LLM (only provided during the negotiation phase), which it may or may not follow. The main purpose of the RL policy's move suggestions is to help the baseline AIs to play more competitively, and avoid the otherwise common stalemates. This can be disabled if you prefer to see the LLMs play with only their natural wits.
 
 - **Engine**: [python-diplomacy](https://github.com/boardgamers/diplomacy)  
 - **RL policy**: Adapted from [welfare_diplomacy_baselines](https://github.com/hannaherlebach/welfare_diplomacy_baselines).
