@@ -1,8 +1,10 @@
 # DiplomacyBench
 
-This is an **in-progress** repository for assessing large language models' ability to play **full press Diplomacy** (i.e., with open negotiations and alliances) against other AI agents. The goal is to explore how LLMs reason, negotiate, ally, and betray in a highly strategic environment—**no pre-existing specialized training** for Diplomacy, just plain LLM reasoning.
+This is an **in-progress** repository for assessing large language models' ability to play **full press Diplomacy** (i.e., with open negotiations and alliances) against other AI agents. The goal is to explore how LLMs reason, negotiate, ally, and betray in a highly strategic competitive game.
 
 So far, this is not fully implemented as a benchmark, but as a framework for LLMs to play a standard full press game of Diplomacy. As of now, 8 LLMs can play against each other, with reporting on the performance of the test model.
+
+It's not really economical to use as a benchmark since each round takes a lot of API calls, and quite a few iterations would be needed to stabilise the scores. So for now this will simply be a testbed for experimenting with LLMs playing diplomacy.
 
 > **Why is this interesting?**  
 > Diplomacy is a classic game of negotiation and balance of power that poses unique challenges in both strategy and communication. It's an interesting test-bed for game theory and complex decision making.
@@ -22,9 +24,11 @@ In our test setup, games are run for up to 50 game-years, with a 4-round negotia
 Each **Power** (e.g., France, England, Germany) is controlled by a separate LLM. These LLMs communicate and negotiate with each other through short messages (the “press” or “missives”) multiple times each turn, then decide on final orders (moves). The game engine processes these orders, updates the board state, and continues until the game ends.
 
 
-## Sample Game Reports
+## Sample Game Reports & Negotiation Logs
 
-Note that these are just single games, so may not be representative of averaged performance over many trials. There will be significant variance of outcomes between games. From my testing, these samples are *roughly* indicative of how these models play. The negotiation logs give interesting insight into their different styles of negotiating.
+**Note** that these are just single games, so may not be representative of averaged performance over many trials. There will be significant variance of outcomes between iterations. From my testing, these samples are *roughly* indicative of how these models play.
+
+The negotiation logs in these reports provide interesting insight into their different styles of negotiating.
 
 - http://eqbench.com/results/diplomacy/claude-3.7-sonnet-1.54.html
 - http://eqbench.com/results/diplomacy/deepseek-r1-1.56.html
