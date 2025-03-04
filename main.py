@@ -247,7 +247,7 @@ def setup_new_game(game_id, negotiation_subrounds):
     }
 
     models = {
-        "AUT": 'deepseek-ai/DeepSeek-R1', #'deepseek/deepseek-r1', #'anthropic/claude-3.7-sonnet', #'openai/o3-mini-high', #''google/gemini-2.0-flash-001', #'openai/o1', #'google/gemini-2.0-flash-001', # 'openai/gpt-4o-mini', #'x-ai/grok-2-1212', #'allenai/llama-3.1-tulu-3-405b', #'anthropic/claude-3.5-sonnet', #'anthropic/claude-3.5-sonnet-20240620', #'google/gemini-pro-1.5', #'openai/o3-mini', #'openai/o1', #'deepseek/deepseek-r1-distill-llama-70b', #'qwen/qwen-max', #'anthropic/claude-3.5-sonnet', #'openai/gpt-4o-2024-11-20', #'meta-llama/llama-3.1-405b-instruct', #'google/gemini-2.0-flash-thinking-exp:free', #'nvidia/llama-3.1-nemotron-70b-instruct', #'deepseek/deepseek-chat', #'qwen/qwen-max', #'deepseek/deepseek-r1', #'gpt-4o-mini', #, #'anthropic/claude-3.5-sonnet', #'anthropic/claude-3.5-haiku-20241022', #'mistralai/mistral-large-2411', #'mistralai/mistral-small-24b-instruct-2501', #'qwen/qwen-max', #'google/gemini-2.0-pro-exp-02-05:free', #'cognitivecomputations/dolphin3.0-r1-mistral-24b:free',#'deepseek/deepseek-r1',#"openai/o3-mini", # DEFAULT_MODEL,#"openai/gpt-4o-2024-11-20",
+        "AUT": 'deepseek-ai/DeepSeek-R1',
         "ENG": DEFAULT_MODEL,
         "FRA": DEFAULT_MODEL,
         "GER": DEFAULT_MODEL,
