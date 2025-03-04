@@ -24,12 +24,12 @@ Each **Power** (e.g., France, England, Germany) is controlled by a separate LLM.
 
 Note that these are just single games, so may not be representative of averaged performance over many trials. There will be significant variance of outcomes between games. From my testing, these samples are *roughly* indicative of how these models play. The negotiation logs give interesting insight into their different styles of negotiating.
 
-http://eqbench.com/results/diplomacy/claude-3.7-sonnet-1.54.html
-http://eqbench.com/results/diplomacy/deepseek-r1-1.56.html
-http://eqbench.com/results/diplomacy/gemini-2.0-flash-001-1.51.html
-http://eqbench.com/results/diplomacy/gpt-4o-mini-1.43.html
-http://eqbench.com/results/diplomacy/o1-1.31.html
-http://eqbench.com/results/diplomacy/o3-mini-high-1.45.html
+- http://eqbench.com/results/diplomacy/claude-3.7-sonnet-1.54.html
+- http://eqbench.com/results/diplomacy/deepseek-r1-1.56.html
+- http://eqbench.com/results/diplomacy/gemini-2.0-flash-001-1.51.html
+- http://eqbench.com/results/diplomacy/gpt-4o-mini-1.43.html
+- http://eqbench.com/results/diplomacy/o1-1.31.html
+- http://eqbench.com/results/diplomacy/o3-mini-high-1.45.html
 
 ![image](https://github.com/user-attachments/assets/9da1fb4d-2486-479f-947f-5adba5754402)
 
