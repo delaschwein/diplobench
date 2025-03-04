@@ -7,7 +7,7 @@ This is an **in-progress** repository for assessing large language models' abili
 
 We test if modern LLMs can reason about alliances, plan multi-stage maneuvers, and negotiate effectively—**zero-shot**. Surprisingly, some models exhibit coherent strategic thinking and can form (and break) alliances in ways that mirror human play.
 
-Here's a game with sonnet-3.7 playing as Austria (the red player), reaching the win condition after :
+Here's a game with sonnet-3.7 playing as Austria (the red player), reaching the win condition after 14 turns:
 
 https://github.com/user-attachments/assets/6a307cec-a889-4d57-a2e0-fbc9e94f63b9
 
