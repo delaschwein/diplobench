@@ -31,6 +31,7 @@ http://eqbench.com/results/diplomacy/gpt-4o-mini-1.43.html
 http://eqbench.com/results/diplomacy/o1-1.31.html
 http://eqbench.com/results/diplomacy/o3-mini-high-1.45.html
 
+![image](https://github.com/user-attachments/assets/9da1fb4d-2486-479f-947f-5adba5754402)
 
 ---
 
