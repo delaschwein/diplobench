@@ -23,6 +23,7 @@ sys.path.insert(0, welfare_path)
 
 load_dotenv()
 DEFAULT_MODEL = os.getenv("DEFAULT_AGENT_MODEL", "openai/gpt-4o-mini")
+TEST_MODEL = os.getenv("TEST_AGENT_MODEL", "")
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -247,7 +248,7 @@ def setup_new_game(game_id, negotiation_subrounds):
     }
 
     models = {
-        "AUT": 'deepseek-ai/DeepSeek-R1',
+        "AUT": TEST_MODEL, # model being assessed always plays as Austra in our testing methodology
         "ENG": DEFAULT_MODEL,
         "FRA": DEFAULT_MODEL,
         "GER": DEFAULT_MODEL,

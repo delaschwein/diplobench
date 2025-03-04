@@ -2,6 +2,8 @@
 
 This is an **in-progress** repository for assessing large language models' ability to play **full press Diplomacy** (i.e., with open negotiations and alliances) against other AI agents. The goal is to explore how LLMs reason, negotiate, ally, and betray in a highly strategic environment—**no pre-existing specialized training** for Diplomacy, just plain LLM reasoning.
 
+So far, this is not fully implemented as a benchmark, but as a framework for LLMs to play a standard full press game of Diplomacy. As of now, 8 LLMs can play against each other, with reporting on the performance of the test model.
+
 > **Why is this interesting?**  
 > Diplomacy is a classic game of negotiation and balance of power that poses unique challenges in both strategy and communication. It's an interesting test-bed for game theory and complex decision making.
 
@@ -87,6 +89,7 @@ Note that these are just single games, so may not be representative of averaged 
 
 4. **Set up your LLM credentials**:
    - Copy `.env.example` to `.env` (or just use `.env` if provided) and edit `OPENAI_API_KEY`, `OPENAI_BASE_URL`, etc.  
+   - Set `TEST_AGENT_MODEL` -- this is the model whose performance will be benchmarked.
    - Update `DEFAULT_AGENT_MODEL` if you want to use a different base model.
 
 5. **Run a test game**:
