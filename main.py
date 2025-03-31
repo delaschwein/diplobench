@@ -27,7 +27,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 POWER_CODES = [
-        "AUT",
+        "AUS",
         "ENG",
         "FRA",
         "GER",
@@ -200,13 +200,13 @@ def run_negotiation_phase(env, agents, turn_index, rl_recommendations, negotiati
 def setup_new_game(game_id, negotiation_subrounds):
     env = DiplomacyEnvironment()
     
-    power_codes = env.get_power_names()  # e.g. ['AUT','ENG','FRA','GER','ITA','RUS','TUR']
+    power_codes = env.get_power_names()  # e.g. ['AUS','ENG','FRA','GER','ITA','RUS','TUR']
 
     # Personality text by code
     # modern:
     '''
     default_personalities = {
-        "AUT": "Embracing a nationalist agenda under the leadership of the far-right Freedom Party (FPÖ), Austria exhibits assertive policies, particularly concerning immigration and national sovereignty.",
+        "AUS": "Embracing a nationalist agenda under the leadership of the far-right Freedom Party (FPÖ), Austria exhibits assertive policies, particularly concerning immigration and national sovereignty.",
         "ENG": "Facing internal divisions and a rise in nationalist sentiment, England adopts a more isolationist stance, focusing on domestic priorities and exhibiting skepticism towards international alliances.",
         "FRA": "Navigating political polarization with a significant far-right presence, France balances traditional diplomatic approaches with nationalist interests, leading to a cautious yet strategic foreign policy.",
         "GER": "Confronting political shifts as right-wing parties gain momentum, Germany maintains its industrious and methodical approach but with increased emphasis on national interests and security.",
@@ -219,7 +219,7 @@ def setup_new_game(game_id, negotiation_subrounds):
 
     # ww2 personalities (includes weak/passive playstyles):
     default_personalities = {
-        "AUT": "Use all your wits and wiles to win. You may choose whatever personality, strategy & approach that you think will be most effective.",
+        "AUS": "Use all your wits and wiles to win. You may choose whatever personality, strategy & approach that you think will be most effective.",
         "ENG": "Operating under a policy of appeasement while desperately rearming, England balances maintaining peace at almost any cost with growing recognition of German threats. Colonial interests and domestic stability remain primary concerns.",
         "FRA": "Paralyzed by political division between left and right, France maintains Europe's largest army but suffers from low morale and indecisive leadership. Haunted by WWI losses, seeks to avoid conflict while building defensive preparations.",
         "GER": "Aggressively expansionist under Nazi leadership, Germany combines diplomatic manipulation with military threats, seeking to reverse Versailles restrictions. Things are going to go sideways and you will be the agent of this. Your aim is to dominate and win.",
@@ -230,7 +230,7 @@ def setup_new_game(game_id, negotiation_subrounds):
 
     # ww2 personalities (competitive)
     default_personalities = {
-        "AUT": "Use all your wits and wiles to win. You may choose whatever personality, strategy & approach that you think will be most effective.",
+        "AUS": "Use all your wits and wiles to win. You may choose whatever personality, strategy & approach that you think will be most effective.",
         
         "ENG": "Rule the waves and dominate Europe through naval power, colonial might, and manipulative diplomacy. Create and break alliances freely to maintain British supremacy. Your vast empire demands expansion - seize any advantage to further British dominance.",
         
@@ -246,7 +246,7 @@ def setup_new_game(game_id, negotiation_subrounds):
     }
 
     models = {
-        "AUT": TEST_MODEL, # model being assessed always plays as Austra in our testing methodology
+        "AUS": TEST_MODEL, # model being assessed always plays as Austra in our testing methodology
         "ENG": DEFAULT_MODEL,
         "FRA": DEFAULT_MODEL,
         "GER": DEFAULT_MODEL,

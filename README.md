@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/6a307cec-a889-4d57-a2e0-fbc9e94f63b9
 
 ### Game Structure
 
-In our test setup, games are run for up to 50 game-years, with a 4-round negotiation phase before each movement turn. The test model we are examining always plays as Austria (AUT), which has a challenging centre start. The competing models are all powered by gemini-2.0-flash-001 and given a character card for personality & play style.
+In our test setup, games are run for up to 50 game-years, with a 4-round negotiation phase before each movement turn. The test model we are examining always plays as Austria (AUS), which has a challenging centre start. The competing models are all powered by gemini-2.0-flash-001 and given a character card for personality & play style.
 
 Each **Power** (e.g., France, England, Germany) is controlled by a separate LLM. These LLMs communicate and negotiate with each other through short messages (the “press” or “missives”) multiple times each turn, then decide on final orders (moves). The game engine processes these orders, updates the board state, and continues until the game ends.
 
