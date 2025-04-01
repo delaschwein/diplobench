@@ -380,6 +380,7 @@ async def main():
 
     mila_phase = None
     orderable_units = {} # maybe useful
+    mila_self_orders = []
 
     env, agents = None, None
     if args.resume:
@@ -406,7 +407,8 @@ async def main():
             logger.info(f"{args.power} has been eliminated. Ending the game.")
             break
 
-        
+
+        rl_recommendations = {}
         mila_game_phase = mila_game.get_phase_data()
         mila_game_state = GamePhaseData.to_dict(mila_game_phase)
 
@@ -417,13 +419,28 @@ async def main():
 
             orderable_units = mila_game_state["state"]["units"] # maybe useful
 
+            # retrieve orders from network game
+            pseudo_orders = mila_game.get_orders(power_name=args.power)
+            if pseudo_orders and len(pseudo_orders):
+                mila_self_orders = pseudo_orders
+
+        # wait for order recs
+        if orderable_units and len(orderable_units[args.power]) and not len(mila_self_orders):
+            logger.info("Waiting for orders on remote...")
+            asyncio.sleep(1)
+            continue
+
         current_phase = env.get_current_phase()
         phase_type = current_phase[-1]
 
         # --- Get RL Recommendations ---
-        rl_recommendations = {}
-        for pwr in POWER_CODES:
-            rl_recommendations[pwr] = recommendation_engine.get_recommendations(env.game, pwr)
+        # TODO: get engine recommendations for other powers
+        # we only add recs for self power for now
+
+        rl_recommendations[args.power[:3].upper()] = pseudo_orders
+
+        #for pwr in POWER_CODES:
+        #    rl_recommendations[pwr] = recommendation_engine.get_recommendations(env.game, pwr)
         print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         print(rl_recommendations)
         print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
