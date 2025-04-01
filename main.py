@@ -12,6 +12,8 @@ from diplomacy_game.agent import LLMAgent
 from diplomacy_game.persistence import save_game_state, load_game_state
 from pathlib import Path
 from diplomacy_game.recommendation_engine import RecommendationEngine
+from diplomacy.client.connection import connect
+import asyncio
 
 # Add welfare_diplomacy_baselines to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -347,23 +349,31 @@ def normalize_and_compare_orders(issued_orders: dict, phase_outcomes: list, game
     return orders_not_accepted, orders_not_issued
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--game-id", type=str, default=None, help="Optional game ID to name save file.")
+    parser.add_argument("--game-id", type=str, default="test", help="Optional game ID to name save file.")
     parser.add_argument("--resume", action="store_true", help="Resume from existing save if it exists.")
     parser.add_argument("--negotiate", action="store_true", help="Enable multi-round negotiation phase (only in Movement phase).")
     parser.add_argument("--negotiation-subrounds", type=int, default=3, help="Number of negotiation sub-rounds per Movement phase if --negotiate is used.")
-    parser.add_argument("--host", type=str, help="Host name of game server. (default: %(default)s)")
-    parser.add_argument("--port", type=int, default=8433, help="Port of game server. (default: %(default)s)")
-    parser.add_argument("--use-ssl", action="store_true", help="Whether to use SSL to connect to the game server. (default: %(default)s)")
+    parser.add_argument("--host", type=str, help="Host name of game server.")
+    parser.add_argument("--port", type=int, default=8433, help="Port of game server.")
+    parser.add_argument("--use-ssl", action="store_true", defalut=False, help="Whether to use SSL to connect to the game server.")
     parser.add_argument("--power", choices=POWERS, help="Power to play as.")
     args = parser.parse_args()
 
     recommendation_engine = RecommendationEngine()
 
-    if not args.game_id:
-        args.game_id = f"game_{random.randint(10000, 99999)}"
-    logger.info(f"Game ID = {args.game_id}")
+    if not args.game_id or not args.host:
+        logger.error("Please provide a game ID and host name.")
+        sys.exit(1)
+
+    connection = await connect(args.host, args.port, use_ssl=args.use_ssl)
+    channel = await connection.authenticate(f"cicero_{args.power}", "password")
+    game = await channel.join_game(game_id=args.game_id, power_name=args.power)
+
+    logger.info(f"Connected to game {args.game_id} as {args.power}.")
+
+    
 
     env, agents = None, None
     if args.resume:
@@ -383,11 +393,9 @@ def main():
     year_count = 0
     
     current_phase = env.get_current_phase()
-    current_year = int(current_phase[1:5])
-    
+
     while not env.done:
         current_phase = env.get_current_phase()
-        current_year = int(current_phase[1:5])
         phase_type = current_phase[-1]
         
         # Check if Austria is eliminated
@@ -597,5 +605,8 @@ def main():
     save_game_state(args.game_id, env, agents)
     logger.info("Done.")
 
+def run():
+    asyncio.run(main())
+
 if __name__ == "__main__":
-    main()
+    run()
