@@ -36,6 +36,16 @@ POWER_CODES = [
         "TUR"
 ]
 
+POWERS = [
+    "AUSTRIA",
+    "ENGLAND",
+    "FRANCE",
+    "GERMANY",
+    "ITALY",
+    "RUSSIA",
+    "TURKEY"
+]
+
 def run_negotiation_phase(env, agents, turn_index, rl_recommendations, negotiation_subrounds=4):
     """
     Orchestrates multiple sub-rounds of negotiations, in which each agent
@@ -344,6 +354,10 @@ def main():
     parser.add_argument("--turns", type=int, default=50, help="Max turns to run.")
     parser.add_argument("--negotiate", action="store_true", help="Enable multi-round negotiation phase (only in Movement phase).")
     parser.add_argument("--negotiation-subrounds", type=int, default=3, help="Number of negotiation sub-rounds per Movement phase if --negotiate is used.")
+    parser.add_argument("--host", type=str, help="Host name of game server. (default: %(default)s)")
+    parser.add_argument("--port", type=int, default=8433, help="Port of game server. (default: %(default)s)")
+    parser.add_argument("--use-ssl", action="store_true", help="Whether to use SSL to connect to the game server. (default: %(default)s)")
+    parser.add_argument("--power", choices=POWERS, help="Power to play as.")
     args = parser.parse_args()
 
     recommendation_engine = RecommendationEngine()
