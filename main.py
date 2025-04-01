@@ -541,7 +541,8 @@ async def main():
                         logger.info(f"Orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
-                        mila_game.set_orders(pwr, orders)
+
+                        mila_game.set_orders(power_name=args.power, orders=orders, wait=False)
                         order_maps[pwr] = mappings
                         accepted_orders[pwr] = valid_orders
 
@@ -585,7 +586,7 @@ async def main():
                         logger.info(f"Adjustment orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
-                        mila_game.set_orders(pwr, orders)
+                        mila_game.set_orders(power_name=args.power, orders=orders, wait=False)
                         order_maps[pwr] = mappings
                         accepted_orders[pwr] = valid_orders
 
