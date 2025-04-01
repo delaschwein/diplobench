@@ -369,7 +369,7 @@ async def main():
 
     connection = await connect(args.host, args.port, use_ssl=args.use_ssl)
     channel = await connection.authenticate(f"cicero_{args.power}", "password")
-    game = await channel.join_game(game_id=args.game_id, power_name=args.power)
+    mila_game = await channel.join_game(game_id=args.game_id, power_name=args.power)
 
     logger.info(f"Connected to game {args.game_id} as {args.power}.")
 
@@ -462,6 +462,7 @@ async def main():
                         logger.info(f"Orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
+                        mila_game.set_orders(pwr, orders)
                         order_maps[pwr] = mappings
                         accepted_orders[pwr] = valid_orders
 
@@ -499,6 +500,7 @@ async def main():
                         logger.info(f"Orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
+                        mila_game.set_orders(pwr, orders)
                         order_maps[pwr] = mappings
                         accepted_orders[pwr] = valid_orders
 
@@ -542,6 +544,7 @@ async def main():
                         logger.info(f"Adjustment orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
+                        mila_game.set_orders(pwr, orders)
                         order_maps[pwr] = mappings
                         accepted_orders[pwr] = valid_orders
 
