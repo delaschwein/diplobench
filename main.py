@@ -209,7 +209,7 @@ def run_negotiation_phase(env, agents, turn_index, rl_recommendations, negotiati
     return negotiation_log_for_turn
 
 
-def setup_new_game(game_id, negotiation_subrounds):
+def setup_new_game(game_id, negotiation_subrounds, self_power):
     env = DiplomacyEnvironment()
     
     power_codes = env.get_power_names()  # e.g. ['AUS','ENG','FRA','GER','ITA','RUS','TUR']
@@ -268,25 +268,25 @@ def setup_new_game(game_id, negotiation_subrounds):
     }
 
     agents = {}
-    for pwr_code in power_codes:
-        personality = default_personalities.get(pwr_code, f"{pwr_code} default personality")
-        agent = LLMAgent(
-            power_name=pwr_code,
-            personality=personality,
-            goals=[f"Survive and thrive as {pwr_code}."],
-            journal=[],
-            model_name=models[pwr_code],
-            negotiation_subrounds=negotiation_subrounds
-        )
-        # Initialize relationships to "~" for each pair
-        rship_updates = []
-        for other_code in power_codes:            
-            if other_code != pwr_code:
-                key = f"{min(pwr_code, other_code)}-{max(pwr_code, other_code)}"
-                rship_updates.append(key+'~')
-        agent.apply_relationship_updates(rship_updates)
-                
-        agents[pwr_code] = agent
+
+    personality = default_personalities.get(self_power, f"{self_power} default personality")
+    agent = LLMAgent(
+        power_name=self_power,
+        personality=personality,
+        goals=[f"Survive and thrive as {self_power}."],
+        journal=[],
+        model_name=models[self_power],
+        negotiation_subrounds=negotiation_subrounds
+    )
+    # Initialize relationships to "~" for each pair
+    rship_updates = []
+    for other_code in power_codes:            
+        if other_code != self_power:
+            key = f"{min(self_power, other_code)}-{max(self_power, other_code)}"
+            rship_updates.append(key+'~')
+    agent.apply_relationship_updates(rship_updates)
+            
+    agents[self_power] = agent
 
     return env, agents
 
@@ -382,9 +382,9 @@ async def main():
             logger.info("Loaded existing game state.")
         else:
             logger.info("No valid save found or load failed. Starting new game.")
-            env, agents = setup_new_game(args.game_id, args.negotiation_subrounds)
+            env, agents = setup_new_game(args.game_id, args.negotiation_subrounds, args.power)
     else:
-        env, agents = setup_new_game(args.game_id, args.negotiation_subrounds)
+        env, agents = setup_new_game(args.game_id, args.negotiation_subrounds, args.power)
 
     if not hasattr(env, "negotiation_history"):
         env.negotiation_history = []
