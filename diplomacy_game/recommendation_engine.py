@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 # Mapping between 3-letter codes and full power names
 CODE_TO_FULL_NAME = {
-    "AUT": "AUSTRIA",
+    "AUS": "AUSTRIA",
     "ENG": "ENGLAND",
     "FRA": "FRANCE",
     "GER": "GERMANY",

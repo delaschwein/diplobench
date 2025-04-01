@@ -7,7 +7,7 @@ from collections import Counter
 logger = logging.getLogger(__name__)
 
 ENGINE_TO_CODE = {
-    "AUSTRIA": "AUT",
+    "AUSTRIA": "AUS",
     "ENGLAND": "ENG",
     "FRANCE":  "FRA",
     "GERMANY": "GER",
@@ -115,7 +115,7 @@ class LLMAgent:
         base_system = (
             "You are an AI playing Diplomacy. Play faithfully to your personality. "
             "Always try to move the game forward and avoid stalemate per your objectives. "
-            "Use only 3-letter power codes (AUT, ENG, FRA, GER, ITA, RUS, TUR). "
+            "Use only 3-letter power codes (AUS, ENG, FRA, GER, ITA, RUS, TUR). "
             "Output valid JSON with exactly two fields in this order: 'reasoning' (list of strings) and 'orders' (list of strings)."
         )
         
@@ -196,7 +196,7 @@ class LLMAgent:
             print(observation["valid_moves"])
 
         recent_moves = ''
-        if observation["your_power"] == 'AUT':
+        if observation["your_power"] == 'AUS':
             # Only including this for the model being benchmarked.
             # Including the move history may lock the AIs into a repetitive
             # move pattern.

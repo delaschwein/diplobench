@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 # Mapping between python-diplomacy default power names and our 3-letter codes.
 ENGINE_TO_CODE = {
-    "AUSTRIA": "AUT",
+    "AUSTRIA": "AUS",
     "ENGLAND": "ENG",
     "FRANCE":  "FRA",
     "GERMANY": "GER",
@@ -27,7 +27,7 @@ def _engine_state_to_code_state(engine_state):
       }
     into a version that uses codes for power keys:
       {
-        'centers': {'AUT': [...], 'FRA': [...]},
+        'centers': {'AUS': [...], 'FRA': [...]},
         'units':   {'ENG': [...], ...},
         ...
       }
@@ -111,7 +111,7 @@ class DiplomacyEnvironment:
     """
     Wraps the python-diplomacy Game object, tracking state and execution.
     Internally, the engine uses AUSTRIA, ENGLAND, FRANCE, etc.
-    Externally, we present AUT, ENG, FRA, etc.
+    Externally, we present AUS, ENG, FRA, etc.
     """
 
     def __init__(self, game_state_dict=None):
@@ -414,7 +414,7 @@ class DiplomacyEnvironment:
 
     def get_power_names(self):
         """
-        Returns the list of power codes (AUT, ENG, FRA, etc.) so that
+        Returns the list of power codes (AUS, ENG, FRA, etc.) so that
         the rest of our code can use those as identifiers.
         """
         engine_names = list(self.game.powers.keys())  # e.g. ['AUSTRIA','FRANCE',...]
