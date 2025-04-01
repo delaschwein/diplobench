@@ -576,7 +576,7 @@ async def main():
                         logger.error(f"Error getting adjustment orders from {pwr}: {e}")
 
         # --- RENDER TO SVG BEFORE PHASE COMPLETE ---
-        render_dir = Path(f"gamestate_renders/{args.game_id}")
+        """ render_dir = Path(f"gamestate_renders/{args.game_id}")
         render_dir.mkdir(parents=True, exist_ok=True)
 
         current_phase = env.get_current_phase()  # re-check after step
@@ -593,7 +593,7 @@ async def main():
         save_game_state(args.game_id, env, agents, issued_orders, accepted_orders)
 
         # Process the phase and log results
-        logger.info(f"Processing {current_phase}...")
+        logger.info(f"Processing {current_phase}...") """
         #env.step()
 
         if hasattr(env, "phase_outcomes"):            
@@ -613,7 +613,7 @@ async def main():
 
 
         # Log the results
-        scores = env.compute_score()
+        #scores = env.compute_score()
         logger.info(f"Scores after {current_phase}: {scores}")
         
         if env.is_game_done():
@@ -622,9 +622,9 @@ async def main():
 
         asyncio.sleep(1)
 
-    final_scores = env.compute_score()
-    logger.info(f"Final Scores: {final_scores}")
-    save_game_state(args.game_id, env, agents)
+    #final_scores = env.compute_score()
+    #logger.info(f"Final Scores: {final_scores}")
+    #save_game_state(args.game_id, env, agents)
     logger.info("Done.")
 
 def run():
