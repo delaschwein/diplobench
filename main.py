@@ -415,6 +415,12 @@ async def main():
         if mila_phase != mila_game_phase["name"]:
             mila_phase = mila_game_phase["name"]
             logging.info(f"Advance to: {mila_phase}")
+            # TODO: sync order with env
+            order_history = mila_game.order_history.last_value()
+
+            for power, orders in order_history.items():
+                power_abbr = power[:3].upper()
+                env.set_orders(power_abbr, orders) # resetting env orders, without mapping/valid order check
             env.step()
 
             orderable_units = mila_game_state["state"]["units"] # maybe useful
@@ -496,7 +502,8 @@ async def main():
                         logger.info(f"Orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
-                        mila_game.set_orders(pwr, orders)
+
+                        mila_game.set_orders(power_name=args.power, orders=orders, wait=False)
                         order_maps[pwr] = mappings
                         accepted_orders[pwr] = valid_orders
 
