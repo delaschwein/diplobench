@@ -351,7 +351,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game-id", type=str, default=None, help="Optional game ID to name save file.")
     parser.add_argument("--resume", action="store_true", help="Resume from existing save if it exists.")
-    parser.add_argument("--turns", type=int, default=50, help="Max turns to run.")
     parser.add_argument("--negotiate", action="store_true", help="Enable multi-round negotiation phase (only in Movement phase).")
     parser.add_argument("--negotiation-subrounds", type=int, default=3, help="Number of negotiation sub-rounds per Movement phase if --negotiate is used.")
     parser.add_argument("--host", type=str, help="Host name of game server. (default: %(default)s)")
@@ -380,13 +379,13 @@ def main():
     if not hasattr(env, "negotiation_history"):
         env.negotiation_history = []
 
-    max_turns = args.turns
     turn_count = 0
     year_count = 0
     
     current_phase = env.get_current_phase()
     current_year = int(current_phase[1:5])
-    while not env.done and current_year <= 1900 + max_turns:
+    
+    while not env.done:
         current_phase = env.get_current_phase()
         current_year = int(current_phase[1:5])
         phase_type = current_phase[-1]
@@ -585,10 +584,6 @@ def main():
             logger.info(f"[DEBUG] Full accepted orders: {engine_accepted_orders}")
 
 
-        
-
-        
-
         # Log the results
         scores = env.compute_score()
         logger.info(f"Scores after {current_phase}: {scores}")
@@ -596,11 +591,6 @@ def main():
         if env.is_game_done():
             logger.info("Game finished due to normal conclusion.")
             break
-
-    if not env.is_game_done():
-        logger.info(f"Reached turn limit {max_turns} without conclusion. Forcing end.")
-    else:
-        logger.info("Game concluded normally.")
 
     final_scores = env.compute_score()
     logger.info(f"Final Scores: {final_scores}")
