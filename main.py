@@ -401,9 +401,6 @@ async def main():
     current_phase = env.get_current_phase()
 
     while not env.done:
-        current_phase = env.get_current_phase()
-        phase_type = current_phase[-1]
-        
         # Check if Austria is eliminated
         if mila_game.powers[args.power].is_eliminated():
             logger.info(f"{args.power} has been eliminated. Ending the game.")
@@ -419,6 +416,9 @@ async def main():
             env.step()
 
             orderable_units = mila_game_state["state"]["units"] # maybe useful
+
+        current_phase = env.get_current_phase()
+        phase_type = current_phase[-1]
 
         # --- Get RL Recommendations ---
         rl_recommendations = {}
