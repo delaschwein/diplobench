@@ -402,8 +402,8 @@ async def main():
         phase_type = current_phase[-1]
         
         # Check if Austria is eliminated
-        if 'AUSTRIA' in env.game.powers and env.game.powers['AUSTRIA'].is_eliminated():
-            logger.info("Austria has been eliminated. Ending the game.")
+        if mila_game.powers[args.power].is_eliminated():
+            logger.info(f"{args.power} has been eliminated. Ending the game.")
             break
 
         # --- Get RL Recommendations ---
