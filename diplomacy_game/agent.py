@@ -195,12 +195,10 @@ class LLMAgent:
             print('!!!!!!!!!! valid moves', observation["your_power"])
             print(observation["valid_moves"])
 
-        recent_moves = ''
-        if observation["your_power"] == 'AUS':
-            # Only including this for the model being benchmarked.
-            # Including the move history may lock the AIs into a repetitive
-            # move pattern.
-            recent_moves = """
+        # Only including this for the model being benchmarked.
+        # Including the move history may lock the AIs into a repetitive
+        # move pattern.
+        recent_moves = """
             === RECENT MOVES ===
 {json.dumps(observation.get("recent_moves", {}), indent=2)}
 """
