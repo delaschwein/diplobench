@@ -361,6 +361,9 @@ async def main():
     parser.add_argument("--power", choices=POWERS, help="Power to play as.")
     args = parser.parse_args()
 
+    power_abbr = args.power[0:3].upper() if args.power else None
+
+
     recommendation_engine = RecommendationEngine()
 
     if not args.game_id or not args.host:
@@ -382,9 +385,9 @@ async def main():
             logger.info("Loaded existing game state.")
         else:
             logger.info("No valid save found or load failed. Starting new game.")
-            env, agents = setup_new_game(args.game_id, args.negotiation_subrounds, args.power)
+            env, agents = setup_new_game(args.game_id, args.negotiation_subrounds, power_abbr)
     else:
-        env, agents = setup_new_game(args.game_id, args.negotiation_subrounds, args.power)
+        env, agents = setup_new_game(args.game_id, args.negotiation_subrounds, power_abbr)
 
     if not hasattr(env, "negotiation_history"):
         env.negotiation_history = []
