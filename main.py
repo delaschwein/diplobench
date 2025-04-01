@@ -14,6 +14,8 @@ from pathlib import Path
 from diplomacy_game.recommendation_engine import RecommendationEngine
 from diplomacy.client.connection import connect
 import asyncio
+from diplomacy.utils.game_phase_data import GamePhaseData
+
 
 # Add welfare_diplomacy_baselines to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -376,7 +378,8 @@ async def main():
 
     logger.info(f"Connected to game {args.game_id} as {args.power}.")
 
-    
+    mila_phase = None
+    orderable_units = {} # maybe useful
 
     env, agents = None, None
     if args.resume:
@@ -405,6 +408,17 @@ async def main():
         if mila_game.powers[args.power].is_eliminated():
             logger.info(f"{args.power} has been eliminated. Ending the game.")
             break
+
+        
+        mila_game_phase = mila_game.get_phase_data()
+        mila_game_state = GamePhaseData.to_dict(mila_game_phase)
+
+        if mila_phase != mila_game_phase["name"]:
+            mila_phase = mila_game_phase["name"]
+            logging.info(f"Advance to: {mila_phase}")
+            env.step()
+
+            orderable_units = mila_game_state["state"]["units"] # maybe useful
 
         # --- Get RL Recommendations ---
         rl_recommendations = {}
@@ -580,7 +594,7 @@ async def main():
 
         # Process the phase and log results
         logger.info(f"Processing {current_phase}...")
-        env.step()
+        #env.step()
 
         if hasattr(env, "phase_outcomes"):            
             last_phase_data = env.phase_outcomes[-1]
@@ -605,6 +619,8 @@ async def main():
         if env.is_game_done():
             logger.info("Game finished due to normal conclusion.")
             break
+
+        asyncio.sleep(1)
 
     final_scores = env.compute_score()
     logger.info(f"Final Scores: {final_scores}")
