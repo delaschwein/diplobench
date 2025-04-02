@@ -26,6 +26,7 @@ sys.path.insert(0, welfare_path)
 load_dotenv()
 DEFAULT_MODEL = os.getenv("DEFAULT_AGENT_MODEL", "openai/gpt-4o-mini")
 TEST_MODEL = os.getenv("TEST_AGENT_MODEL", "")
+PRESUBMIT_SECOND = os.getenv("PRESUBMIT_SECOND", 45)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,7 +51,18 @@ POWERS = [
     "TURKEY"
 ]
 
-def run_negotiation_phase(env, agents, turn_index, rl_recommendations, negotiation_subrounds=4):
+async def should_presubmit(mila_game):
+    schedule = await mila_game.query_schedule()
+    scheduler_event = schedule.schedule
+    server_end = scheduler_event.time_added + scheduler_event.delay
+    server_remaining = server_end - scheduler_event.current_time
+    deadline_timer = server_remaining * scheduler_event.time_unit
+
+    if deadline_timer < PRESUBMIT_SECOND:
+        return True
+    return False
+
+async def run_negotiation_phase(env, mila_game, agents, turn_index, rl_recommendations, negotiation_subrounds=4):
     """
     Orchestrates multiple sub-rounds of negotiations, in which each agent
     composes short missives.
@@ -68,10 +80,16 @@ def run_negotiation_phase(env, agents, turn_index, rl_recommendations, negotiati
     inbox = {pwr: [] for pwr in agents.keys()}
     inbox_history = {pwr: [] for pwr in agents.keys()}  # Track each agent's full negotiation history
 
-    for sub_i in range(1, negotiation_subrounds + 1):
-        logger.info(f"Negotiation sub-round {sub_i}/{negotiation_subrounds}")
+    cnt = 1
+
+    while True:
+        presubmit = await should_presubmit(mila_game)
+        if presubmit:
+            break
+    #for sub_i in range(1, negotiation_subrounds + 1):
+        logger.info(f"Negotiation sub-round {cnt}/{negotiation_subrounds}")
         subround_record = {
-            "subround_index": sub_i,
+            "subround_index": cnt,
             "sent_missives": [],
             "received_missives": {pwr: [] for pwr in agents.keys()}
         }
@@ -94,7 +112,7 @@ def run_negotiation_phase(env, agents, turn_index, rl_recommendations, negotiati
                     agent.compose_missives,
                     obs,
                     turn_index,
-                    sub_i,
+                    cnt,
                     all_missives_for_agent,
                     formatted_inbox
                 )
@@ -155,10 +173,12 @@ def run_negotiation_phase(env, agents, turn_index, rl_recommendations, negotiati
         # Append history per agent
         for pwr in agents.keys():
             inbox_history[pwr].append({
-                "subround_index": sub_i,
+                "subround_index": cnt,
                 "sent_missives": [msg for msg in subround_record["sent_missives"] if msg["sender"] == pwr],
                 "received_missives": subround_record["received_missives"][pwr]
             })
+
+        asyncio.sleep(10)
 
     # Final negotiation summary
     final_inbox_snapshot = {p: inbox[p][:] for p in inbox}
@@ -366,7 +386,7 @@ async def main():
     power_abbr = args.power[0:3].upper() if args.power else None
 
 
-    recommendation_engine = RecommendationEngine()
+    #recommendation_engine = RecommendationEngine()
 
     if not args.game_id or not args.host:
         logger.error("Please provide a game ID and host name.")
@@ -479,7 +499,7 @@ async def main():
             logger.info("=== MOVEMENT PHASE ===")
             if args.negotiate:
                 logger.info("Starting negotiation rounds...")
-                negotiation_log = run_negotiation_phase(env, agents, turn_count, rl_recommendations, args.negotiation_subrounds)
+                negotiation_log = run_negotiation_phase(env, mila_game, agents, turn_count, rl_recommendations, args.negotiation_subrounds)
                 env.negotiation_history.append(negotiation_log)
 
             logger.info("Collecting movement orders from all powers...")
