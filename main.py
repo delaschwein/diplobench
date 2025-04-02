@@ -15,6 +15,7 @@ from diplomacy_game.recommendation_engine import RecommendationEngine
 from diplomacy.client.connection import connect
 import asyncio
 from diplomacy.utils.game_phase_data import GamePhaseData
+from diplomacy.engine.message import Message
 
 
 # Add welfare_diplomacy_baselines to Python path
@@ -88,6 +89,13 @@ async def run_negotiation_phase(
         # for sub_i in range(1, negotiation_subrounds + 1):
         logger.info(f"Negotiation sub-round {cnt}/{negotiation_subrounds}")
 
+        subround_record = {
+            "subround_index": cnt,
+            "sent_missives": [],
+            "received_missives": {pwr: [] for pwr in agents.keys()},
+        }
+
+        # add incoming message to inbox
         current_messages = mila_game.messages
         in_game_messages = [
             x
@@ -96,12 +104,14 @@ async def run_negotiation_phase(
         ]
         to_respond = unread_messages + in_game_messages
 
-        subround_record = {
-            "subround_index": cnt,
-            "sent_missives": [],
-            "received_missives": {pwr: [] for pwr in agents.keys()},
-        }
+        for msg in to_respond:
+            payload = msg.message
+            sender = msg.sender
 
+            inbox[self_power].append({"sender": sender, "body": payload})
+            subround_record["received_missives"][self_power].append(
+                {"sender": sender, "body": payload}
+            )
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures_map = {}
@@ -141,12 +151,24 @@ async def run_negotiation_phase(
         for sender, outbox in new_missives_by_power.items():
             for msg in outbox:
                 recipients = msg.get("recipients", [])
+                assert len(recipients) == 1, "Expected 1 recipient"
+                assert recipients[0] in POWERS, f"Invalid recipient: {recipients[0]}"
+
                 body = msg.get("body", "")
                 if not body.strip():
                     continue
 
                 subround_record["sent_missives"].append(
                     {"sender": sender, "recipients": recipients, "body": body}
+                )
+
+                await mila_game.send_game_message(
+                    Message(
+                        sender=sender,
+                        recipients=recipients[0],
+                        message=body,
+                        phase=mila_game.get_current_phase(),
+                    )
                 )
 
                 for rcp in recipients:
@@ -156,9 +178,7 @@ async def run_negotiation_phase(
                             {"sender": sender, "body": body}
                         )
                     else:
-                        logger.warning(
-                            f"Recipient {rcp} not found or is eliminated."
-                        )
+                        logger.warning(f"Recipient {rcp} not found or is eliminated.")
 
         negotiation_log_for_turn["subrounds"].append(subround_record)
 
