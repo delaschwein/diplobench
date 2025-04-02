@@ -435,7 +435,6 @@ IMPORTANT: These may or may not not align with your diplomatic goals. Feel free 
 There are {self.NUM_MISSIVES} rounds of communications this turn. This missive will be {sub_round_index} of {self.NUM_MISSIVES}.
 You can send up to 3 short missives in this round of communications, each to one or multiple recipients.
 Use 3-letter codes to designate recipients.
-Special recipient 'ALL' means broadcast to everyone.
 
 Convoy Rules:
 - If convoying with another player, you must both negotiate and verify the move is valid & listed in strategic overview

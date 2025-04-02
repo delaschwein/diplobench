@@ -69,6 +69,8 @@ async def run_negotiation_phase(
         "final_summaries": {},
     }
 
+    assert len(agents) == 1, f"Expected 1 agent, got {len(agents)}"
+
     last_msg_timestamp = -1
 
     # Track inboxes and history
@@ -85,11 +87,6 @@ async def run_negotiation_phase(
             break
         # for sub_i in range(1, negotiation_subrounds + 1):
         logger.info(f"Negotiation sub-round {cnt}/{negotiation_subrounds}")
-        subround_record = {
-            "subround_index": cnt,
-            "sent_missives": [],
-            "received_missives": {pwr: [] for pwr in agents.keys()},
-        }
 
         current_messages = mila_game.messages
         in_game_messages = [
@@ -97,7 +94,14 @@ async def run_negotiation_phase(
             for x in current_messages.values()
             if x.sender in POWERS and x.recipient == self_power
         ]
-        unread_messages += in_game_messages
+        to_respond = unread_messages + in_game_messages
+
+        subround_record = {
+            "subround_index": cnt,
+            "sent_missives": [],
+            "received_missives": {pwr: [] for pwr in agents.keys()},
+        }
+
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures_map = {}
@@ -145,26 +149,16 @@ async def run_negotiation_phase(
                     {"sender": sender, "recipients": recipients, "body": body}
                 )
 
-                if "ALL" in recipients:
-                    for rcp in inbox.keys():
-                        if (
-                            rcp != sender
-                        ):  # ✅ Ensure the sender does NOT receive their own "ALL" message
-                            inbox[rcp].append({"sender": sender, "body": body})
-                            subround_record["received_missives"][rcp].append(
-                                {"sender": sender, "body": body}
-                            )
-                else:
-                    for rcp in recipients:
-                        if rcp in inbox:
-                            inbox[rcp].append({"sender": sender, "body": body})
-                            subround_record["received_missives"][rcp].append(
-                                {"sender": sender, "body": body}
-                            )
-                        else:
-                            logger.warning(
-                                f"Recipient {rcp} not found or is eliminated."
-                            )
+                for rcp in recipients:
+                    if rcp in inbox:
+                        inbox[rcp].append({"sender": sender, "body": body})
+                        subround_record["received_missives"][rcp].append(
+                            {"sender": sender, "body": body}
+                        )
+                    else:
+                        logger.warning(
+                            f"Recipient {rcp} not found or is eliminated."
+                        )
 
         negotiation_log_for_turn["subrounds"].append(subround_record)
 
