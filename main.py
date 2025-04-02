@@ -104,6 +104,11 @@ async def run_negotiation_phase(
         ]
         to_respond = unread_messages + in_game_messages
 
+        # update last_msg_timestamp
+        if len(in_game_messages):
+            timestamps = [x.time_sent for x in in_game_messages]
+            last_msg_timestamp = max(timestamps)
+
         for msg in to_respond:
             payload = msg.message
             sender = msg.sender
@@ -252,7 +257,7 @@ async def run_negotiation_phase(
     for p in inbox:
         inbox[p] = []
 
-    return negotiation_log_for_turn
+    return negotiation_log_for_turn, last_msg_timestamp
 
 
 def setup_new_game(game_id, negotiation_subrounds, self_power):
@@ -556,7 +561,7 @@ async def main():
             logger.info("=== MOVEMENT PHASE ===")
             if args.negotiate:
                 logger.info("Starting negotiation rounds...")
-                negotiation_log = run_negotiation_phase(
+                negotiation_log, last_msg_timestamp = run_negotiation_phase(
                     env,
                     mila_game,
                     agents,
