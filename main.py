@@ -62,7 +62,7 @@ async def should_presubmit(mila_game):
         return True
     return False
 
-async def run_negotiation_phase(env, mila_game, agents, turn_index, rl_recommendations, negotiation_subrounds=4):
+async def run_negotiation_phase(env, mila_game, agents, turn_index, rl_recommendations, negotiation_subrounds=4, unread_messages=None, self_power=None):
     """
     Orchestrates multiple sub-rounds of negotiations, in which each agent
     composes short missives.
@@ -74,7 +74,7 @@ async def run_negotiation_phase(env, mila_game, agents, turn_index, rl_recommend
         "final_summaries": {}
     }
 
-    
+    last_msg_timestamp = -1
 
     # Track inboxes and history
     inbox = {pwr: [] for pwr in agents.keys()}
@@ -93,6 +93,11 @@ async def run_negotiation_phase(env, mila_game, agents, turn_index, rl_recommend
             "sent_missives": [],
             "received_missives": {pwr: [] for pwr in agents.keys()}
         }
+
+        current_messages = mila_game.messages
+        in_game_messages = [x for x in current_messages.values() if x.sender in POWERS and x.recipient == self_power]
+        unread_messages += in_game_messages
+        
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures_map = {}
@@ -431,11 +436,13 @@ async def main():
         rl_recommendations = {}
         mila_game_phase = mila_game.get_phase_data()
         mila_game_state = GamePhaseData.to_dict(mila_game_phase)
+        msgs_until_prev_movement = []
 
         if mila_phase != mila_game_phase["name"]:
             mila_phase = mila_game_phase["name"]
             logging.info(f"Advance to: {mila_phase}")
-            # TODO: sync order with env
+
+            # sync order from network game
             order_history = mila_game.order_history.last_value()
 
             for power, orders in order_history.items():
@@ -499,7 +506,7 @@ async def main():
             logger.info("=== MOVEMENT PHASE ===")
             if args.negotiate:
                 logger.info("Starting negotiation rounds...")
-                negotiation_log = run_negotiation_phase(env, mila_game, agents, turn_count, rl_recommendations, args.negotiation_subrounds)
+                negotiation_log = run_negotiation_phase(env, mila_game, agents, turn_count, rl_recommendations, args.negotiation_subrounds, unread_messages=msgs_until_prev_movement, self_power=args.power)
                 env.negotiation_history.append(negotiation_log)
 
             logger.info("Collecting movement orders from all powers...")
