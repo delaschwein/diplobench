@@ -16,7 +16,7 @@ from diplomacy.engine.message import Message
 
 load_dotenv()
 DEFAULT_MODEL = os.getenv("DEFAULT_AGENT_MODEL", "openai/gpt-4o-mini")
-TEST_MODEL = os.getenv("TEST_AGENT_MODEL", "")
+TEST_MODEL = os.getenv("TEST_AGENT_MODEL", "openai/gpt-4o-mini")
 PRESUBMIT_SECOND = os.getenv("PRESUBMIT_SECOND", 45)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -113,8 +113,8 @@ async def run_negotiation_phase(
             payload = msg.message
             sender = msg.sender
 
-            inbox[self_power].append({"sender": sender, "body": payload})
-            subround_record["received_missives"][self_power].append(
+            inbox[self_power[:3]].append({"sender": sender, "body": payload})
+            subround_record["received_missives"][self_power[:3]].append(
                 {"sender": sender, "body": payload}
             )
 
@@ -168,9 +168,9 @@ async def run_negotiation_phase(
                 )
 
                 await mila_game.send_game_message(
-                    Message(
-                        sender=sender,
-                        recipients=code_to_power[recipients[0]],
+                    message=Message(
+                        sender=code_to_power[sender],
+                        recipient=code_to_power[recipients[0]],
                         message=body,
                         phase=mila_game.get_current_phase(),
                     )
@@ -305,7 +305,7 @@ def setup_new_game(game_id, negotiation_subrounds, self_power):
     }
 
     models = {
-        "AUS": TEST_MODEL,  # model being assessed always plays as Austra in our testing methodology
+        "AUS": DEFAULT_MODEL,  # model being assessed always plays as Austra in our testing methodology
         "ENG": DEFAULT_MODEL,
         "FRA": DEFAULT_MODEL,
         "GER": DEFAULT_MODEL,
@@ -429,13 +429,13 @@ async def main():
     parser.add_argument(
         "--use-ssl",
         action="store_true",
-        defalut=False,
+        default=False,
         help="Whether to use SSL to connect to the game server.",
     )
     parser.add_argument("--power", choices=POWERS, help="Power to play as.")
     args = parser.parse_args()
 
-    power_abbr = args.power[0:3].upper() if args.power else None
+    power_abbr = args.power[:3].upper() if args.power else None
 
     # recommendation_engine = RecommendationEngine()
 
@@ -448,6 +448,12 @@ async def main():
     mila_game = await channel.join_game(game_id=args.game_id, power_name=args.power)
 
     logger.info(f"Connected to game {args.game_id} as {args.power}.")
+
+    while mila_game.is_game_forming:
+        await asyncio.sleep(1)
+        logger.info("Waiting for game to start...")
+
+    logger.info("Game has started.")
 
     mila_phase = None
     orderable_units = {}  # maybe useful
@@ -489,19 +495,20 @@ async def main():
         mila_game_state = GamePhaseData.to_dict(mila_game_phase)
         msgs_until_prev_movement = []
 
-        if mila_phase != mila_game_phase["name"]:
-            mila_phase = mila_game_phase["name"]
+        if mila_phase != mila_game_state["name"]:
+            mila_phase = mila_game_state["name"]
             logging.info(f"Advance to: {mila_phase}")
 
             # sync order from network game
-            order_history = mila_game.order_history.last_value()
+            if mila_game.order_history and mila_game.order_history.last_value():
+                order_history = mila_game.order_history.last_value()
 
-            for power, orders in order_history.items():
-                power_abbr = power[:3].upper()
-                env.set_orders(
-                    power_abbr, orders
-                )  # resetting env orders, without mapping/valid order check
-            env.step()
+                for power, orders in order_history.items():
+                    power_abbr = power[:3].upper()
+                    env.set_orders(
+                        power_abbr, orders
+                    )  # resetting env orders, without mapping/valid order check
+                env.step()
 
             orderable_units = mila_game_state["state"]["units"]  # maybe useful
 
@@ -516,7 +523,7 @@ async def main():
             and len(orderable_units[args.power])
             and not len(mila_self_orders)
         ):
-            logger.info("Waiting for orders on remote...")
+            logger.info(f"Waiting for {args.power} orders on remote...")
             asyncio.sleep(1)
             continue
 
@@ -575,7 +582,7 @@ async def main():
             logger.info("=== MOVEMENT PHASE ===")
             if args.negotiate:
                 logger.info("Starting negotiation rounds...")
-                negotiation_log, last_msg_timestamp = run_negotiation_phase(
+                negotiation_log, last_msg_timestamp = await run_negotiation_phase(
                     env,
                     mila_game,
                     agents,

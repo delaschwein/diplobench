@@ -473,14 +473,14 @@ Tips:
 - Move the game forward and avoid stalemate.
 
 Return valid JSON with a 'missives' list containing up to 3 missives, each with:
-- 'recipients': list of 3-letter codes, you may list multiple recipients
+- 'recipients': list of 3-letter codes, you can only list one recipient
 - 'body': string (keep to 1 paragraph)
 
 Output format:
 {{
     "missives": [
         {{
-            "recipients": ["Recipient 1", ...],
+            "recipients": ["Recipient"],
             "body": "Your 1 paragraph message"
         }},
         ...
