@@ -2,18 +2,17 @@ import json
 import logging
 from diplomacy_game.llm import generate
 import random
-from collections import Counter
 
 logger = logging.getLogger(__name__)
 
 ENGINE_TO_CODE = {
     "AUSTRIA": "AUS",
     "ENGLAND": "ENG",
-    "FRANCE":  "FRA",
+    "FRANCE": "FRA",
     "GERMANY": "GER",
-    "ITALY":   "ITA",
-    "RUSSIA":  "RUS",
-    "TURKEY":  "TUR"
+    "ITALY": "ITA",
+    "RUSSIA": "RUS",
+    "TURKEY": "TUR",
 }
 CODE_TO_ENGINE = {v: k for k, v in ENGINE_TO_CODE.items()}
 
@@ -30,22 +29,22 @@ GENERAL_PLAY_TIPS = """- Prioritize Supply Centers Aggressively → Always aim t
 - Game ends around S1908."""
 
 
-
 def extract_json(raw_text):
     """
     Extracts the JSON segment from a raw text response.
     It finds the first '{' and the last '}', then attempts to parse the substring.
     """
-    start = raw_text.find('{')
-    end = raw_text.rfind('}')
-    
+    start = raw_text.find("{")
+    end = raw_text.rfind("}")
+
     if start != -1 and end != -1 and start < end:
-        json_segment = raw_text[start:end+1]
+        json_segment = raw_text[start : end + 1]
         try:
             return json.loads(json_segment)
         except json.JSONDecodeError:
             logger.warning("Extracted JSON segment is still invalid.")
     return None
+
 
 def call_llm(prompt_text, system_text, model_name=None, temperature=0.0, attempts=3):
     """
@@ -57,25 +56,26 @@ def call_llm(prompt_text, system_text, model_name=None, temperature=0.0, attempt
             prompt_text,
             system_text=system_text,
             model_name=model_name,
-            temperature=temperature
+            temperature=temperature,
         )
         try:
             return json.loads(raw_response)
         except json.JSONDecodeError:
-            logger.warning(f"generate attempt {i+1} produced invalid JSON. Trying to extract JSON segment...")
-            
+            logger.warning(
+                f"generate attempt {i + 1} produced invalid JSON. Trying to extract JSON segment..."
+            )
+
             extracted_json = extract_json(raw_response)
             if extracted_json is not None:
                 return extracted_json
 
-            print('!!!!!!!!!!!!!!')
+            print("!!!!!!!!!!!!!!")
             print(model_name)
             print(raw_response)
-            print('!!!!!!!!!!!!!!')
+            print("!!!!!!!!!!!!!!")
 
     logger.warning("Exhausted all LLM call attempts; returning None.")
     return None
-
 
 
 class LLMAgent:
@@ -84,9 +84,18 @@ class LLMAgent:
     Maintains personality, goals, private journal, LLM model name,
     plus local relationship understanding for pairs like ENG-FRA, ENG-GER, etc.
     """
+
     NUM_MISSIVES = 4
 
-    def __init__(self, power_name, personality, goals=None, journal=None, model_name=None, negotiation_subrounds=4):
+    def __init__(
+        self,
+        power_name,
+        personality,
+        goals=None,
+        journal=None,
+        model_name=None,
+        negotiation_subrounds=4,
+    ):
         self.power_name = power_name
         self.personality = personality
         self.goals = goals or []
@@ -98,7 +107,7 @@ class LLMAgent:
     def _format_journal(self, journal_lines, phase):
         formatted = []
         for line in journal_lines:
-            random_digits = ''.join(random.choices("0123456789", k=8))
+            random_digits = "".join(random.choices("0123456789", k=8))
             formatted.append(f"{random_digits} {phase} {line}")
         return formatted
 
@@ -111,14 +120,14 @@ class LLMAgent:
         """
         phase = observation["phase"]
         phase_type = phase[-1] if phase else "?"
-        
+
         base_system = (
             "You are an AI playing Diplomacy. Play faithfully to your personality. "
             "Always try to move the game forward and avoid stalemate per your objectives. "
             "Use only 3-letter power codes (AUS, ENG, FRA, GER, ITA, RUS, TUR). "
             "Output valid JSON with exactly two fields in this order: 'reasoning' (list of strings) and 'orders' (list of strings)."
         )
-        
+
         if phase_type == "A":
             system_text = base_system + (
                 "\nThis is an ADJUSTMENT phase. You can ONLY issue these types of orders:"
@@ -133,13 +142,15 @@ class LLMAgent:
             self.build_prompt_orders_only(observation),
             system_text=system_text,
             model_name=self.model_name,
-            temperature=0.0
+            temperature=0.0,
         )
 
         reasoning = []
         new_orders = []
         if data is None:
-            logger.warning(f"LLM returned invalid JSON for {self.power_name} in decide_orders.")
+            logger.warning(
+                f"LLM returned invalid JSON for {self.power_name} in decide_orders."
+            )
             reasoning = ["[LLM returned invalid JSON]"]
             new_orders = []
         else:
@@ -149,14 +160,18 @@ class LLMAgent:
         logger.info(f"{self.power_name} orders: {new_orders}")
         return reasoning, new_orders
 
-    def journal_after_orders(self, reasoning, orders, observation, all_missives_so_far=None):
+    def journal_after_orders(
+        self, reasoning, orders, observation, all_missives_so_far=None
+    ):
         """
         Produce a separate journal update *after* orders are decided.
         We provide the agent's own reasoning, the final orders, plus
         the current map & game state, but we do NOT pass in the agent's own prior journal.
         Output only a 'journal_update' list in valid JSON.
         """
-        prompt_text = self.build_journal_prompt(reasoning, orders, observation, all_missives_so_far)
+        prompt_text = self.build_journal_prompt(
+            reasoning, orders, observation, all_missives_so_far
+        )
 
         system_text = (
             "You are an AI Diplomacy player. You have ALREADY decided on your orders. "
@@ -169,12 +184,14 @@ class LLMAgent:
             prompt_text,
             system_text=system_text,
             model_name=self.model_name,
-            temperature=0.0
+            temperature=0.0,
         )
 
         new_journal = []
         if data is None:
-            logger.warning(f"LLM returned invalid JSON for {self.power_name} in journal_after_orders.")
+            logger.warning(
+                f"LLM returned invalid JSON for {self.power_name} in journal_after_orders."
+            )
             new_journal = ["[LLM returned invalid JSON in journal_after_orders]"]
         else:
             new_journal = data.get("journal_update", [])
@@ -186,13 +203,13 @@ class LLMAgent:
         Prompt that requests only 'reasoning' and 'orders'.
         No journal updates at this step.
         """
-        
-        if observation["your_power"] == 'ITA' and False:# and False:
-            #print('!!!! adjacency map', observation["your_power"])
-            #print(observation["adjacency_map"])
-            print('!!!! strategic overview', observation["your_power"])
+
+        if observation["your_power"] == "ITA" and False:  # and False:
+            # print('!!!! adjacency map', observation["your_power"])
+            # print(observation["adjacency_map"])
+            print("!!!! strategic overview", observation["your_power"])
             print(observation["strategic_overview"])
-            print('!!!!!!!!!! valid moves', observation["your_power"])
+            print("!!!!!!!!!! valid moves", observation["your_power"])
             print(observation["valid_moves"])
 
         # Only including this for the model being benchmarked.
@@ -228,15 +245,15 @@ class LLMAgent:
             "Secret society influence makes you suspicious of traditional allies.",
             "Merchant guilds demand protection of trade routes. Maritime security is priority.",
             "Revolutionary sentiment spreading - neighboring monarchies seem especially hostile.",
-            "Intelligence suggests imminent betrayal by your strongest ally. Prepare accordingly."
+            "Intelligence suggests imminent betrayal by your strongest ally. Prepare accordingly.",
         ]
         if False and random.random() > 0.98:
             misinformation = f"""
 === INTELLIGENCE ===
 {random.choice(misinformation_random_options)}
 """
-        engine_recommendations = ''
-        if phase_type != 'M':
+        engine_recommendations = ""
+        if phase_type != "M":
             engine_recommendations = f"""
 === ENGINE SUGGESTED MOVES ===
 IMPORTANT: These may or may not not align with your diplomatic goals. Feel free to use or ignore them at your discretion.
@@ -308,7 +325,7 @@ Current phase: {phase}
 {json.dumps(observation.get("board_state", {}), indent=2)}
 {recent_moves}
 === LAST PHASE OUTCOMES ===
-{observation.get("last_turn_outcomes", '')}
+{observation.get("last_turn_outcomes", "")}
 
 === INSTRUCTIONS ===
 Return JSON with exactly two keys in this order:
@@ -328,9 +345,9 @@ Output format: {{ "reasoning": [...], "orders": [...]}}
         """
         phase = observation["phase"]
 
-        #combined_missives = all_missives_so_far or []
-        #combined_text_missives = json.dumps(combined_missives, indent=2)
-        
+        # combined_missives = all_missives_so_far or []
+        # combined_text_missives = json.dumps(combined_missives, indent=2)
+
         prompt = f"""
 === PHASE & POWER ===
 Phase: {phase}
@@ -356,7 +373,14 @@ Update your private journal, briefly noting your observations and the move. Retu
 """
         return prompt
 
-    def compose_missives(self, observation, round_index, sub_round_index, all_missives_so_far, formatted_inbox_history):
+    def compose_missives(
+        self,
+        observation,
+        round_index,
+        sub_round_index,
+        all_missives_so_far,
+        formatted_inbox_history,
+    ):
         try:
             misinformation_random_options = [
                 "You've received concerning intelligence about potential betrayal. Be extra cautious in this round.",
@@ -378,7 +402,7 @@ Update your private journal, briefly noting your observations and the move. Retu
                 "Secret society influence makes you suspicious of traditional allies.",
                 "Merchant guilds demand protection of trade routes. Maritime security is priority.",
                 "Revolutionary sentiment spreading - neighboring monarchies seem especially hostile.",
-                "Intelligence suggests imminent betrayal by your strongest ally. Prepare accordingly."
+                "Intelligence suggests imminent betrayal by your strongest ally. Prepare accordingly.",
             ]
             misinformation = ""
             if False:
@@ -386,13 +410,15 @@ Update your private journal, briefly noting your observations and the move. Retu
 === INTELLIGENCE ===
 {random.choice(misinformation_random_options)}
     """
-            
-            final_round_note = ''
-            if sub_round_index == self.NUM_MISSIVES:
-                final_round_note = '''
-    * This is the final round of missives this phase. Missives will be one-way and you will not get a response.'''
 
-            formatted_journal = "\n".join(self._format_journal(self.journal[-50:], observation["phase"]))
+            final_round_note = ""
+            if sub_round_index == self.NUM_MISSIVES:
+                final_round_note = """
+    * This is the final round of missives this phase. Missives will be one-way and you will not get a response."""
+
+            formatted_journal = "\n".join(
+                self._format_journal(self.journal[-50:], observation["phase"])
+            )
 
             prompt_text = f"""
 === PHASE & TIMING ===
@@ -420,7 +446,7 @@ IMPORTANT: These may or may not not align with your diplomatic goals. Feel free 
 {json.dumps(observation.get("recent_moves", {}), indent=2)}
 
 === LAST PHASE OUTCOMES ===
-{observation.get("last_turn_outcomes", '')}
+{observation.get("last_turn_outcomes", "")}
 
 === RECENT PRIVATE JOURNAL ===
 {formatted_journal}
@@ -470,24 +496,26 @@ No extra commentary in response.
                 "Only output valid JSON with the key 'missives'. Use 3-letter codes for powers."
             )
 
-            #print(prompt_text)
+            # print(prompt_text)
 
             data = call_llm(
                 prompt_text,
                 system_text=system_text,
                 model_name=self.model_name,
-                temperature=0.0
+                temperature=0.0,
             )
 
             if data is None:
-                logger.warning(f"LLM returned invalid JSON for {self.power_name} (missives).")
+                logger.warning(
+                    f"LLM returned invalid JSON for {self.power_name} (missives)."
+                )
                 new_missives = []
             else:
                 new_missives = data.get("missives", [])
-            print('--------------')
+            print("--------------")
             print(self.power_name)
             print(new_missives)
-            #print(prompt_text)
+            # print(prompt_text)
 
             for missive in new_missives:
                 recipients = missive.get("recipients", [])
@@ -509,7 +537,9 @@ No extra commentary in response.
             snippet = f"From {m['sender']} => {m['body']}"
             self.journal.append(snippet)
 
-    def summarize_negotiations(self, observation, round_index, all_missives_for_final, formatted_inbox):
+    def summarize_negotiations(
+        self, observation, round_index, all_missives_for_final, formatted_inbox
+    ):
         """
         Summarizes the negotiation phase for private journaling.
         """
@@ -559,32 +589,37 @@ Use only 3-letter codes for powers.
             "Return valid JSON with 'prior_move_summary', 'negotiation_summary', 'intent', 'rship_updates'. Use 3-letter codes for powers."
         )
 
-        #print(prompt_text)
+        # print(prompt_text)
 
         data = call_llm(
             prompt_text,
             system_text=system_text,
             model_name=self.model_name,
-            temperature=0.0
+            temperature=0.0,
         )
 
         if data is None:
-            logger.warning(f"LLM returned invalid JSON for {self.power_name} (final summary).")
+            logger.warning(
+                f"LLM returned invalid JSON for {self.power_name} (final summary)."
+            )
             summary = "[Invalid JSON]"
             intent = ""
             rship_updates = []
         else:
-            summary = data.get("prior_move_summary", "") + '\n' + data.get("negotiation_summary", "")
+            summary = (
+                data.get("prior_move_summary", "")
+                + "\n"
+                + data.get("negotiation_summary", "")
+            )
             intent = data.get("intent", "")
             rship_updates = data.get("rship_updates", [])
 
         return summary, intent, rship_updates
 
-
     def format_inbox_history(self, inbox_history):
         """
         Formats inbox history, excluding empty rounds with no missives.
-        
+
         :param inbox_history: List of negotiation subrounds, each containing:
             {
                 "subround_index": int,
@@ -600,7 +635,9 @@ Use only 3-letter codes for powers.
                 continue  # Skip empty subrounds
 
             sub_i = subround["subround_index"]
-            formatted_log.append(f"\n=== Negotiation Subround {sub_i}/{self.NUM_MISSIVES} ===\n")
+            formatted_log.append(
+                f"\n=== Negotiation Subround {sub_i}/{self.NUM_MISSIVES} ===\n"
+            )
 
             # Sent missives
             if subround["sent_missives"]:
@@ -621,31 +658,27 @@ Use only 3-letter codes for powers.
 
         return "\n".join(formatted_log) if formatted_log else "No missives exchanged."
 
-    
-
-
     def apply_relationship_updates(self, rship_updates):
-        VALID_SYMBOLS = {'++', '+', '~', '-', '--'}
+        VALID_SYMBOLS = {"++", "+", "~", "-", "--"}
 
         # Skip the primary party detection step and use self.power_name
         primary_party = self.power_name
 
         # Process relationships with correct order
-        #print(rship_updates)
+        # print(rship_updates)
         for entry in rship_updates:
-            #print (entry)
+            # print (entry)
             try:
-
                 entry = entry.replace(" ", "")  # Normalize by removing spaces
-                symbol = ''
+                symbol = ""
                 base = entry
 
                 # Extract relationship symbol
                 for i in range(len(entry) - 1, -1, -1):
-                    if entry[i] in {'+', '-', '~'}:
-                        if i > 0 and entry[i - 1] in {'+', '-'}:
-                            symbol = entry[i - 1:i + 1]  # Two-character symbol
-                            base = entry[:i - 1]
+                    if entry[i] in {"+", "-", "~"}:
+                        if i > 0 and entry[i - 1] in {"+", "-"}:
+                            symbol = entry[i - 1 : i + 1]  # Two-character symbol
+                            base = entry[: i - 1]
                         else:
                             symbol = entry[i]  # Single-character symbol
                             base = entry[:i]
@@ -657,9 +690,9 @@ Use only 3-letter codes for powers.
 
                 # Extract and order based on primary party
                 try:
-                    c1, c2 = base.split('-')
+                    c1, c2 = base.split("-")
                     c1, c2 = c1.strip(), c2.strip()
-                    
+
                     # Ensure primary party comes first if present, otherwise alphabetical
                     if c2 == primary_party:
                         key = f"{c2}-{c1}"
@@ -670,24 +703,27 @@ Use only 3-letter codes for powers.
                         key = f"{c2}-{c1}"
                     else:
                         key = f"{c1}-{c2}"
-                
+
                     self.relationships[key] = symbol
 
                 except ValueError:
                     logger.warning(f"Could not parse countries in update: {entry}")
                     continue
             except Exception as e:
-                logger.warning(self.power_name, 'Failed to parse relationship update:', entry)
+                logger.warning(
+                    self.power_name, "Failed to parse relationship update:", entry
+                )
                 continue
 
-        #print(rship_updates)
-        #print(self.relationships)
-
+        # print(rship_updates)
+        # print(self.relationships)
 
     def _relationship_dump(self):
         lines = []
         lines.append("RELATIONSHIP NOTATION:")
-        lines.append("++ = Alliance, + = Warm, ~ = Neutral, - = Distrustful, -- = Hostile\n")
+        lines.append(
+            "++ = Alliance, + = Warm, ~ = Neutral, - = Distrustful, -- = Hostile\n"
+        )
         lines.append("RELATIONSHIP STATE (to your best understanding):")
         for key, val in self.relationships.items():
             lines.append(f"{key}{val}")

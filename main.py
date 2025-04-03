@@ -2,27 +2,17 @@
 
 import os
 import sys
-import random
 import argparse
 import logging
 import concurrent.futures
 from dotenv import load_dotenv
 from diplomacy_game.environment import DiplomacyEnvironment
 from diplomacy_game.agent import LLMAgent
-from diplomacy_game.persistence import save_game_state, load_game_state
-from pathlib import Path
-from diplomacy_game.recommendation_engine import RecommendationEngine
+from diplomacy_game.persistence import load_game_state
 from diplomacy.client.connection import connect
 import asyncio
 from diplomacy.utils.game_phase_data import GamePhaseData
 from diplomacy.engine.message import Message
-
-
-# Add welfare_diplomacy_baselines to Python path
-project_root = os.path.dirname(os.path.abspath(__file__))
-welfare_path = os.path.join(project_root, "welfare_diplomacy_baselines")
-sys.path.insert(0, welfare_path)
-
 
 load_dotenv()
 DEFAULT_MODEL = os.getenv("DEFAULT_AGENT_MODEL", "openai/gpt-4o-mini")
