@@ -36,6 +36,16 @@ POWER_CODES = ["AUS", "ENG", "FRA", "GER", "ITA", "RUS", "TUR"]
 
 POWERS = ["AUSTRIA", "ENGLAND", "FRANCE", "GERMANY", "ITALY", "RUSSIA", "TURKEY"]
 
+code_to_power = {
+    "AUS": "AUSTRIA",
+    "ENG": "ENGLAND",
+    "FRA": "FRANCE",
+    "GER": "GERMANY",
+    "ITA": "ITALY",
+    "RUS": "RUSSIA",
+    "TUR": "TURKEY",
+}
+
 
 async def should_presubmit(mila_game):
     schedule = await mila_game.query_schedule()
@@ -157,7 +167,7 @@ async def run_negotiation_phase(
             for msg in outbox:
                 recipients = msg.get("recipients", [])
                 assert len(recipients) == 1, "Expected 1 recipient"
-                assert recipients[0] in POWERS, f"Invalid recipient: {recipients[0]}"
+                assert recipients[0] in POWER_CODES, f"Invalid recipient: {recipients[0]}"
 
                 body = msg.get("body", "")
                 if not body.strip():
@@ -170,7 +180,7 @@ async def run_negotiation_phase(
                 await mila_game.send_game_message(
                     Message(
                         sender=sender,
-                        recipients=recipients[0],
+                        recipients=code_to_power[recipients[0]],
                         message=body,
                         phase=mila_game.get_current_phase(),
                     )
@@ -476,6 +486,8 @@ async def main():
 
     current_phase = env.get_current_phase()
 
+    last_received_timestamp = -1
+
     while not env.done:
         # Check if Austria is eliminated
         if mila_game.powers[args.power].is_eliminated():
@@ -556,6 +568,18 @@ async def main():
         order_maps = {}  # Track how each order was normalized
         accepted_orders = {}  # Track what the engine actually accepted
 
+        # might has messages from prev movement
+        # add to negotiation history
+        if last_received_timestamp > -1:
+            messages_until_last_movement = {}
+            for k, v in mila_game.message_history.reversed_items():
+                messages_until_last_movement[k] = [x for x in v.values()] # List[Message]
+
+                if k.endswith("M"):
+                    break
+
+            msgs_until_prev_movement = [x for x in messages_until_last_movement.values() if x.time_sent > last_received_timestamp]
+
         # Movement phases
         if phase_type == "M":
             logger.info("=== MOVEMENT PHASE ===")
@@ -572,6 +596,8 @@ async def main():
                     self_power=args.power,
                 )
                 env.negotiation_history.append(negotiation_log)
+                last_received_timestamp = last_msg_timestamp
+
 
             logger.info("Collecting movement orders from all powers...")
             with concurrent.futures.ThreadPoolExecutor() as executor:
