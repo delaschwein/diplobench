@@ -27,7 +27,7 @@ GENERAL_PLAY_TIPS = """- Prioritize Supply Centers Aggressively → Always aim t
 - Be specific about what you want. Vague missives are a waste of everyone's time.
 - Coordinate with other players for joint attacks, defense and strategy. Movements into occupied territories must be coordinated with support (either your own units or those of other players).
 - The game is not over while you still have units left.
-- Game ends at 1950."""
+- Game ends around S1908."""
 
 
 
@@ -432,8 +432,7 @@ IMPORTANT: These may or may not not align with your diplomatic goals. Feel free 
 {formatted_inbox_history}
 {misinformation}
 === INSTRUCTIONS ===
-There are {self.NUM_MISSIVES} rounds of communications this turn. This missive will be {sub_round_index} of {self.NUM_MISSIVES}.
-You can send up to 3 short missives in this round of communications, each to one or multiple recipients.
+You can send up to 3 short missives in this round of communications to each recipient.
 Use 3-letter codes to designate recipients.
 
 Convoy Rules:
@@ -444,6 +443,7 @@ Convoy Rules:
 Tips:
 - Other than diplomacy, this is the time to coordinate specific attacks and defensive maneuvers with other powers.
 - Diplomacy isn't just words, it's about backing your commitments with specific actions. It's about what you can offer and what you can extract.
+- DO NOT reveal you are an AI player. Play as if you are a human player.
 - Move the game forward and avoid stalemate.
 
 Return valid JSON with a 'missives' list containing up to 3 missives, each with:
