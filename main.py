@@ -89,11 +89,7 @@ async def run_negotiation_phase(
         # for sub_i in range(1, negotiation_subrounds + 1):
         logger.info(f"Negotiation sub-round {cnt}/{negotiation_subrounds}")
 
-        subround_record = {
-            "subround_index": cnt,
-            "sent_missives": [],
-            "received_missives": {pwr: [] for pwr in agents.keys()},
-        }
+
 
         # add incoming message to inbox
         current_messages = mila_game.messages
@@ -104,6 +100,14 @@ async def run_negotiation_phase(
         ]
         to_respond = unread_messages + in_game_messages
 
+        sent_messages_this_turn = [{"recipients": [x.recipient], "body": x.message, "sender": x.sender} for x in current_messages.values() if x.sender == self_power]
+
+        subround_record = {
+            "subround_index": cnt,
+            "sent_missives": sent_messages_this_turn,
+            "received_missives": {pwr: [] for pwr in agents.keys()},
+        }
+
         # update last_msg_timestamp
         if len(in_game_messages):
             timestamps = [x.time_sent for x in in_game_messages]
@@ -113,9 +117,9 @@ async def run_negotiation_phase(
             payload = msg.message
             sender = msg.sender
 
-            inbox[self_power[:3]].append({"sender": sender, "body": payload})
+            inbox[self_power[:3]].append({"sender": sender[:3], "body": payload})
             subround_record["received_missives"][self_power[:3]].append(
-                {"sender": sender, "body": payload}
+                {"sender": sender[:3], "body": payload}
             )
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -201,7 +205,8 @@ async def run_negotiation_phase(
                 }
             )
 
-        asyncio.sleep(10)
+        cnt += 1
+        await asyncio.sleep(10)
 
     # Final negotiation summary
     final_inbox_snapshot = {p: inbox[p][:] for p in inbox}
@@ -485,7 +490,7 @@ async def main():
     last_received_timestamp = -1
 
     while not env.done:
-        # Check if Austria is eliminated
+        # Check if eliminated
         if mila_game.powers[args.power].is_eliminated():
             logger.info(f"{args.power} has been eliminated. Ending the game.")
             break
@@ -524,7 +529,7 @@ async def main():
             and not len(mila_self_orders)
         ):
             logger.info(f"Waiting for {args.power} orders on remote...")
-            asyncio.sleep(1)
+            await asyncio.sleep(1)
             continue
 
         current_phase = env.get_current_phase()
@@ -572,7 +577,7 @@ async def main():
             for k, v in mila_game.message_history.reversed_items():
                 messages_until_last_movement[k] = [x for x in v.values()] # List[Message]
 
-                if k.endswith("M"):
+                if str(k).endswith("M"):
                     break
 
             msgs_until_prev_movement = [x for x in messages_until_last_movement.values() if x.time_sent > last_received_timestamp]
@@ -768,13 +773,13 @@ async def main():
 
         # Log the results
         # scores = env.compute_score()
-        logger.info(f"Scores after {current_phase}: {scores}")
+        #logger.info(f"Scores after {current_phase}: {scores}")
 
         if env.is_game_done():
             logger.info("Game finished due to normal conclusion.")
             break
 
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
 
     # final_scores = env.compute_score()
     # logger.info(f"Final Scores: {final_scores}")
