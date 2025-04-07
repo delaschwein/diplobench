@@ -85,7 +85,7 @@ class LLMAgent:
     plus local relationship understanding for pairs like ENG-FRA, ENG-GER, etc.
     """
 
-    NUM_MISSIVES = 4
+    NUM_MISSIVES = 40
 
     def __init__(
         self,
@@ -94,7 +94,7 @@ class LLMAgent:
         goals=None,
         journal=None,
         model_name=None,
-        negotiation_subrounds=4,
+        negotiation_subrounds=10,
     ):
         self.power_name = power_name
         self.personality = personality
@@ -378,9 +378,11 @@ Update your private journal, briefly noting your observations and the move. Retu
         observation,
         round_index,
         sub_round_index,
-        all_missives_so_far,
         formatted_inbox_history,
+        to_respond,
     ):
+        with open("to_respond.txt", "a") as f:
+            f.write(to_respond)
         try:
             misinformation_random_options = [
                 "You've received concerning intelligence about potential betrayal. Be extra cautious in this round.",
@@ -454,11 +456,13 @@ IMPORTANT: These may or may not not align with your diplomatic goals. Feel free 
 === RELATIONSHIPS ===
 {self._relationship_dump()}
 
-=== COMMUNICATION THIS PHASE ===
+=== COMMUNICATIONS ===
 {formatted_inbox_history}
 {misinformation}
+=== NEW INCOMING MESSAGES ===
+{to_respond}
 === INSTRUCTIONS ===
-You can send up to 3 short missives in this round of communications to each recipient.
+You can send up to 3 short missives in this round of communications to each recipient to respond to incoming messages.
 Use 3-letter codes to designate recipients.
 
 Convoy Rules:
@@ -516,11 +520,6 @@ No extra commentary in response.
             print(self.power_name)
             print(new_missives)
             # print(prompt_text)
-
-            for missive in new_missives:
-                recipients = missive.get("recipients", [])
-                if "ALL" in recipients:
-                    missive["recipients"] = ["ALL"]
 
             if len(new_missives) > 3:
                 new_missives = new_missives[:3]
@@ -616,7 +615,7 @@ Use only 3-letter codes for powers.
 
         return summary, intent, rship_updates
 
-    def format_inbox_history(self, inbox_history):
+    def format_inbox_history(self, convos):
         """
         Formats inbox history, excluding empty rounds with no missives.
 
@@ -624,14 +623,24 @@ Use only 3-letter codes for powers.
             {
                 "subround_index": int,
                 "sent_missives": [...],  # List of sent messages
-                "received_missives": [...]  # List of received messages
+                "received_missives": [...],  # List of received messages
+                "conversations": {...},  # List of conversations
             }
         :return: Formatted string for LLM context.
         """
         formatted_log = []
 
-        for subround in inbox_history:
-            if not subround["sent_missives"] and not subround["received_missives"]:
+        for interlocutor, messages in convos.items():
+            # Skip if there are no messages in the conversation
+            if not messages:
+                continue
+            formatted_log.append(f"=== Conversation history with {interlocutor} ===")
+            for msg in messages:
+                formatted_log.append(f"{msg['sender']}: {msg['body']}")
+            formatted_log.append("")
+
+        """ for subround in inbox_history:
+            if not subround["conversations"]:
                 continue  # Skip empty subrounds
 
             sub_i = subround["subround_index"]
@@ -639,7 +648,6 @@ Use only 3-letter codes for powers.
                 f"\n=== Negotiation Subround {sub_i}/{self.NUM_MISSIVES} ===\n"
             )
 
-            # Sent missives
             if subround["sent_missives"]:
                 formatted_log.append("Missives Sent:")
                 for msg in subround["sent_missives"]:
@@ -655,6 +663,18 @@ Use only 3-letter codes for powers.
                     formatted_log.append(f"  - From {msg['sender']}: {msg['body']}")
             else:
                 formatted_log.append("Missives Received: (None)")
+            
+            for protagonist, messages in subround["conversations"].items():
+                # Skip if there are no messages in the conversation
+                if not messages:
+                    continue
+                formatted_log.append(f"=== Conversation with {protagonist} ===")
+                for msg in messages:
+                    formatted_log.append(f"{msg['sender']}: {msg['body']}")
+                formatted_log.append("") """
+
+        with open("formatted_log.txt", "a") as f:
+            f.write("\n".join(formatted_log))
 
         return "\n".join(formatted_log) if formatted_log else "No missives exchanged."
 

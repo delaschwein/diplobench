@@ -55,7 +55,7 @@ async def run_negotiation_phase(
     agents,
     turn_index,
     rl_recommendations,
-    negotiation_subrounds=4,
+    negotiation_subrounds=10,
     unread_messages=None,
     self_power=None,
 ):
@@ -72,8 +72,6 @@ async def run_negotiation_phase(
 
     assert len(agents) == 1, f"Expected 1 agent, got {len(agents)}"
 
-    last_msg_timestamp = -1
-
     # Track inboxes and history
     inbox = {pwr: [] for pwr in agents.keys()}
     inbox_history = {
@@ -82,6 +80,8 @@ async def run_negotiation_phase(
 
     cnt = 1
 
+    last_replied_timestamp = -1  # Track the last time a message was replied to
+
     while True:
         presubmit = await should_presubmit(mila_game)
         if presubmit:
@@ -89,105 +89,111 @@ async def run_negotiation_phase(
         # for sub_i in range(1, negotiation_subrounds + 1):
         logger.info(f"Negotiation sub-round {cnt}/{negotiation_subrounds}")
 
-
-
         # add incoming message to inbox
         current_messages = mila_game.messages
+
         in_game_messages = [
             x
             for x in current_messages.values()
             if x.sender in POWERS and x.recipient == self_power
         ]
-        to_respond = unread_messages + in_game_messages
 
-        sent_messages_this_turn = [{"recipients": [x.recipient], "body": x.message, "sender": x.sender} for x in current_messages.values() if x.sender == self_power]
+        sent_messages = [
+            x for x in in_game_messages if x.sender == self_power and x.recipient in POWERS
+        ]
+
+        incoming_messages = [
+            x for x in in_game_messages if x.sender in POWERS and x.recipient == self_power
+        ]
+
+        # if first subround, all current turn messages + unread
+        # else messages in current turn that have not been replied to
+
+        to_respond = (
+            unread_messages + incoming_messages
+            if unread_messages and last_replied_timestamp < 0
+            else [x for x in incoming_messages if x.time_sent > last_replied_timestamp]
+        )
+
+        all_relevant_messages = to_respond + sent_messages
+
+        convos = {pwr: [] for pwr in POWER_CODES if pwr != self_power[:3]}
+
+        # if new turn no convo else prev messages
+        if last_replied_timestamp > 0:
+            history = [x for x in in_game_messages if x.time_sent < last_replied_timestamp]
+            history.sort(key=lambda x: x.time_sent)
+
+            for msg in history:
+                protagonist = (
+                    msg.sender[:3] if msg.sender != self_power else msg.recipient[:3]
+                )
+                convos[protagonist].append(
+                    {
+                        "sender": msg.sender[:3],
+                        "body": msg.message,
+                        "recipient": msg.recipient,
+                    }
+                )
+
+        last_replied_timestamp = max([x.time_sent for x in all_relevant_messages], default=last_replied_timestamp)
 
         subround_record = {
             "subround_index": cnt,
-            "sent_missives": sent_messages_this_turn,
-            "received_missives": {pwr: [] for pwr in agents.keys()},
+            "sent_missives": [],
+            "received_missives": to_respond,
+            "conversations": convos,
         }
 
-        # update last_msg_timestamp
-        if len(in_game_messages):
-            timestamps = [x.time_sent for x in in_game_messages]
-            last_msg_timestamp = max(timestamps)
+        print("to_respond: ", to_respond)
 
-        for msg in to_respond:
-            payload = msg.message
-            sender = msg.sender
+        if mila_game.powers[self_power].is_eliminated():
+            sys.exit(0)
+        
+        obs = env.get_observation_for_power(self_power[:3])
+        obs["rl_recommendations"] = rl_recommendations
+        formatted_inbox = agents[self_power[:3]].format_inbox_history(
+            convos
+        )  # Get formatted context
 
-            inbox[self_power[:3]].append({"sender": sender[:3], "body": payload})
-            subround_record["received_missives"][self_power[:3]].append(
-                {"sender": sender[:3], "body": payload}
-            )
+        formatted_incoming_messages = [
+            f"{x.sender[:3]}: {x.message}" for x in to_respond
+        ]  # Format incoming messages
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures_map = {}
-            for power, agent in agents.items():
-                engine_power = env.game.powers[agent.get_engine_power_name()]
-                if engine_power.is_eliminated():
-                    continue
-
-                obs = env.get_observation_for_power(power)
-                obs["rl_recommendations"] = rl_recommendations
-                formatted_inbox = agent.format_inbox_history(
-                    inbox_history[power]
-                )  # Get formatted context
-                all_missives_for_agent = inbox[power]
-
-                fut = executor.submit(
-                    agent.compose_missives,
-                    obs,
-                    turn_index,
-                    cnt,
-                    all_missives_for_agent,
-                    formatted_inbox,
-                )
-                futures_map[fut] = power
-
-            new_missives_by_power = {}
-            for future in concurrent.futures.as_completed(futures_map):
-                power = futures_map[future]
-                try:
-                    result = future.result()
-                except Exception as e:
-                    logger.error(f"Error in compose_missives for {power}: {e}")
-                    result = []
-                new_missives_by_power[power] = result
+        # Compose missives for each agent
+        missives = agents[self_power[:3]].compose_missives(
+            obs,
+            turn_index,
+            cnt,
+            formatted_inbox,
+            "\n".join(formatted_incoming_messages),
+        )
 
         # Distribute missives and track history
-        for sender, outbox in new_missives_by_power.items():
-            for msg in outbox:
-                recipients = msg.get("recipients", [])
-                assert len(recipients) == 1, "Expected 1 recipient"
-                assert recipients[0] in POWER_CODES, f"Invalid recipient: {recipients[0]}"
+        for msg in missives:
+            recipients = msg.get("recipients", [])
+            if len(recipients) > 1:
+                continue
 
-                body = msg.get("body", "")
-                if not body.strip():
-                    continue
+            if recipients[0] not in POWER_CODES or recipients[0] == self_power[:3]:
+                continue
 
-                subround_record["sent_missives"].append(
-                    {"sender": sender, "recipients": recipients, "body": body}
+            body = msg.get("body", "")
+            if not body.strip():
+                continue
+
+            subround_record["sent_missives"].append(
+                {"sender": self_power[:3], "recipients": recipients, "body": body}
+            )
+
+            await mila_game.send_game_message(
+                message=Message(
+                    sender=self_power,
+                    recipient=code_to_power[recipients[0]],
+                    message=body,
+                    phase=mila_game.get_current_phase(),
                 )
-
-                await mila_game.send_game_message(
-                    message=Message(
-                        sender=code_to_power[sender],
-                        recipient=code_to_power[recipients[0]],
-                        message=body,
-                        phase=mila_game.get_current_phase(),
-                    )
-                )
-
-                for rcp in recipients:
-                    if rcp in inbox:
-                        inbox[rcp].append({"sender": sender, "body": body})
-                        subround_record["received_missives"][rcp].append(
-                            {"sender": sender, "body": body}
-                        )
-                    else:
-                        logger.warning(f"Recipient {rcp} not found or is eliminated.")
+            )
 
         negotiation_log_for_turn["subrounds"].append(subround_record)
 
@@ -196,73 +202,67 @@ async def run_negotiation_phase(
             inbox_history[pwr].append(
                 {
                     "subround_index": cnt,
-                    "sent_missives": [
-                        msg
-                        for msg in subround_record["sent_missives"]
-                        if msg["sender"] == pwr
-                    ],
-                    "received_missives": subround_record["received_missives"][pwr],
+                    "sent_missives": [],
+                    "received_missives": subround_record["received_missives"],
+                    "conversations": subround_record["conversations"],
                 }
             )
 
         cnt += 1
-        await asyncio.sleep(10)
+        await asyncio.sleep(30)
 
     # Final negotiation summary
     final_inbox_snapshot = {p: inbox[p][:] for p in inbox}
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        summary_futures = {}
-        for power, agent in agents.items():
-            engine_power = env.game.powers[agent.get_engine_power_name()]
-            if engine_power.is_eliminated():
-                continue
+    messages = mila_game.messages
+    relevant_messages = [x for x in messages.values() if x.sender == self_power or x.recipient == self_power]
+    relevant_messages.sort(key=lambda x: x.time_sent)
 
-            obs = env.get_observation_for_power(power)
-            # print('!! formatting inbox history')
-            # formatted_inbox = agent.format_inbox_history(final_inbox_snapshot[power])  # Use formatted history for final summary
-            formatted_inbox = agent.format_inbox_history(
-                inbox_history[power]
-            )  # Use formatted history for final summary
-            # print(inbox_history[power])
-            fut = executor.submit(
-                agent.summarize_negotiations,
-                obs,
-                turn_index,
-                final_inbox_snapshot[power],
-                formatted_inbox,
-            )
-            summary_futures[fut] = power
-
-        for future in concurrent.futures.as_completed(summary_futures):
-            power = summary_futures[future]
-            try:
-                journal_summary, intent, rship_updates = future.result()
-            except Exception as e:
-                logger.error(f"Error in summarize_negotiations for {power}: {e}")
-                journal_summary = "[Error]"
-                intent = ""
-                rship_updates = []
-
-            agents[power].journal.append(
-                f"{env.get_current_phase()} Negotiation summary: {journal_summary}"
-            )
-            if intent:
-                agents[power].journal.append(
-                    f"{env.get_current_phase()} Intent going forward: {intent}"
-                )
-            agents[power].apply_relationship_updates(rship_updates)
-
-            negotiation_log_for_turn["final_summaries"][power] = {
-                "journal_summary": journal_summary,
-                "intent": intent,
-                "rship_updates": rship_updates,
+    final_convos = {pwr: [] for pwr in POWER_CODES if pwr != self_power[:3]}
+    for msg in relevant_messages:
+        protagonist = (
+            msg.sender[:3] if msg.sender != self_power else msg.recipient[:3]
+        )
+        final_convos[protagonist].append(
+            {
+                "sender": msg.sender[:3],
+                "body": msg.message,
+                "recipient": msg.recipient,
             }
+        )
+
+    # Finalize the inbox history
+    for pwr, agent in agents.items():
+        obs = env.get_observation_for_power(pwr)
+        formatted_inbox = agent.format_inbox_history(
+            final_convos
+        )
+
+        summary, intent, rship_updates = agent.summarize_negotiations(
+            obs,
+            turn_index,
+            final_inbox_snapshot[pwr],
+            formatted_inbox,
+        )
+
+        agents[pwr].journal.append(
+            f"{env.get_current_phase()} Negotiation summary: {summary}"
+        )
+        if intent:
+            agents[pwr].journal.append(
+                f"{env.get_current_phase()} Intent going forward: {intent}"
+            )
+        agents[pwr].apply_relationship_updates(rship_updates)
+        negotiation_log_for_turn["final_summaries"][pwr] = {
+            "journal_summary": summary,
+            "intent": intent,
+            "rship_updates": rship_updates,
+        }
 
     # Clear inbox for the next phase
     for p in inbox:
         inbox[p] = []
 
-    return negotiation_log_for_turn, last_msg_timestamp
+    return negotiation_log_for_turn, last_replied_timestamp
 
 
 def setup_new_game(game_id, negotiation_subrounds, self_power):
@@ -426,7 +426,7 @@ async def main():
     parser.add_argument(
         "--negotiation-subrounds",
         type=int,
-        default=3,
+        default=10,
         help="Number of negotiation sub-rounds per Movement phase if --negotiate is used.",
     )
     parser.add_argument("--host", type=str, help="Host name of game server.")
@@ -517,20 +517,20 @@ async def main():
 
             orderable_units = mila_game_state["state"]["units"]  # maybe useful
 
-            # retrieve orders from network game
-            pseudo_orders = mila_game.get_orders(power_name=args.power)
-            if pseudo_orders and len(pseudo_orders):
-                mila_self_orders = pseudo_orders
-
         # wait for order recs
         if (
             orderable_units
             and len(orderable_units[args.power])
-            and not len(mila_self_orders)
         ):
-            logger.info(f"Waiting for {args.power} orders on remote...")
-            await asyncio.sleep(1)
-            continue
+            # retrieve orders from network game
+            pseudo_orders = mila_game.get_orders(power_name=args.power)
+            if pseudo_orders and len(pseudo_orders):
+                mila_self_orders = pseudo_orders
+            
+            if not len(mila_self_orders):
+                logger.info(f"Waiting for {args.power} orders on remote...")
+                await asyncio.sleep(1)
+                continue
 
         current_phase = env.get_current_phase()
         phase_type = current_phase[-1]
@@ -573,14 +573,18 @@ async def main():
         # might has messages from prev movement
         # add to negotiation history
         if last_received_timestamp > -1:
-            messages_until_last_movement = {}
+            messages_until_last_movement = []
             for k, v in mila_game.message_history.reversed_items():
-                messages_until_last_movement[k] = [x for x in v.values()] # List[Message]
+                messages_until_last_movement += v.values()  # List[Message]
 
                 if str(k).endswith("M"):
                     break
 
-            msgs_until_prev_movement = [x for x in messages_until_last_movement.values() if x.time_sent > last_received_timestamp]
+            msgs_until_prev_movement = [
+                x
+                for x in messages_until_last_movement
+                if x.time_sent > last_received_timestamp and x.recipient == args.power
+            ]
 
         # Movement phases
         if phase_type == "M":
@@ -599,7 +603,6 @@ async def main():
                 )
                 env.negotiation_history.append(negotiation_log)
                 last_received_timestamp = last_msg_timestamp
-
 
             logger.info("Collecting movement orders from all powers...")
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -773,7 +776,7 @@ async def main():
 
         # Log the results
         # scores = env.compute_score()
-        #logger.info(f"Scores after {current_phase}: {scores}")
+        # logger.info(f"Scores after {current_phase}: {scores}")
 
         if env.is_game_done():
             logger.info("Game finished due to normal conclusion.")
