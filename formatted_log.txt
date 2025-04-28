@@ -1,0 +1,64 @@
+=== Conversation history with RUS ===
+RUS: I propose peace between AUS and RUS.
+
+=== Conversation history with TUR ===
+TUR: I propose peace between AUS and TUR.
+=== Conversation history with RUS ===
+RUS: I propose peace between AUS and RUS.
+
+=== Conversation history with TUR ===
+TUR: I propose peace between AUS and TUR.
+=== Conversation history with RUS ===
+RUS: I propose peace between AUS and RUS.
+
+=== Conversation history with TUR ===
+TUR: I propose peace between AUS and TUR.
+=== Conversation history with RUS ===
+RUS: I propose peace between AUS and RUS.
+
+=== Conversation history with TUR ===
+TUR: I propose peace between AUS and TUR.
+=== Conversation history with RUS ===
+RUS: I propose peace between AUS and RUS.
+
+=== Conversation history with TUR ===
+TUR: I propose peace between AUS and TUR.
+=== Conversation history with RUS ===
+RUS: I propose peace between AUS and RUS.
+
+=== Conversation history with TUR ===
+TUR: I propose peace between AUS and TUR.
+=== Conversation history with ENG ===
+AUS: Let's discuss a non-aggression pact. I believe we can both focus on our respective fronts without stepping on each other's toes.
+
+=== Conversation history with ITA ===
+AUS: I propose we coordinate our movements in the Adriatic Sea. If you can support my fleet in moving to VEN, I can ensure we both benefit from our expansion.
+ITA: I propose peace between AUS and ITA.
+AUS: Thank you for your proposal for peace. I am interested in ensuring our borders remain secure and would like to explore potential cooperation in the region.
+AUS: I see opportunities for collaboration in the region. How about we discuss our mutual interests and potential joint strategies?
+AUS: I see potential for collaboration between our nations. If we can agree on our borders, I believe we can both expand our influence without conflict.
+AUS: I see potential for cooperation between us. Perhaps we can discuss a joint strategy to secure our borders and expand our influence.
+AUS: I see potential for cooperation between us. If you are open to it, I propose we coordinate our movements in the Adriatic to ensure mutual safety and growth.
+AUS: I see potential for cooperation between us. Perhaps we can discuss a joint strategy to secure our borders and expand our influence.
+AUS: I see opportunities for collaboration in the region. Would you be interested in discussing a joint strategy to secure our interests?
+
+=== Conversation history with RUS ===
+AUS: I see potential for mutual gain in the Balkans. If you can support my move to SER, I can assist you in securing RUM in return.
+RUS: I propose peace between AUS and RUS.
+AUS: Your offer of peace is noted. I believe it would be beneficial for both of us to maintain a cordial relationship while we pursue our goals.
+AUS: I appreciate your proposal for peace, and I am open to discussing how we can mutually benefit from a stable relationship moving forward.
+AUS: I appreciate your proposal for peace, and I believe we can mutually benefit from a non-aggression pact. Let's discuss how we can support each other's interests moving forward.
+AUS: I appreciate your proposal for peace, and I believe it would be beneficial for both of us to focus on our respective expansions without conflict.
+AUS: I appreciate your proposal for peace, and I am open to maintaining a cordial relationship. Let's discuss how we can mutually benefit from our positions.
+AUS: I appreciate your proposal for peace, and I believe it would be beneficial for both of us to focus on our respective expansions without conflict.
+AUS: I appreciate your proposal for peace, and I am open to discussing how we can mutually benefit from a non-aggression pact.
+
+=== Conversation history with TUR ===
+TUR: I propose peace between AUS and TUR.
+AUS: I appreciate your proposal for peace, and I am open to discussing a non-aggression pact that allows us both to focus on our respective expansions.
+AUS: Your proposal for peace is noted. Let's ensure our borders remain secure and explore potential areas of cooperation.
+AUS: Thank you for your peace proposal. I think it would be wise for us to maintain a friendly relationship. Perhaps we can explore opportunities for cooperation in the region.
+AUS: Your offer of peace is noted. I suggest we both focus on our growth in the region, as it could lead to mutual benefits.
+AUS: Your proposal for peace is noted. I believe we can both benefit from a non-aggression pact while we focus on our respective expansions.
+AUS: Your proposal for peace is noted. I suggest we both focus on our growth in the region, as it could lead to mutual benefits.
+AUS: Your proposal for peace is noted. Let's ensure our borders remain secure and explore potential cooperation in the future.

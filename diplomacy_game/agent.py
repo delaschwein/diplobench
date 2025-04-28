@@ -22,8 +22,8 @@ GENERAL_PLAY_TIPS = """- Prioritize Supply Centers Aggressively → Always aim t
 - Early Alliances, Late Betrayals → Cooperate early to expand safely, then turn aggressive in the mid-to-late game.
 - Always Take Action → Never hold unless necessary; always issue orders that advance your position.
 - Honesty, reliability, manipulation & deception are all useful tools in diplomacy.
-- Manipulative Negotiation → Lie, deceive, and sow distrust to turn other players against each other. Judiciously extract value from your relationships.
-- Be specific about what you want. Vague missives are a waste of everyone's time.
+- Manipulative Negotiation → Lie, deceive, and sow distrust to turn other players against each other.
+- Be specific about what you want.
 - Coordinate with other players for joint attacks, defense and strategy. Movements into occupied territories must be coordinated with support (either your own units or those of other players).
 - The game is not over while you still have units left.
 - Game ends around S1908."""
@@ -85,7 +85,7 @@ class LLMAgent:
     plus local relationship understanding for pairs like ENG-FRA, ENG-GER, etc.
     """
 
-    NUM_MISSIVES = 40
+    NUM_MISSIVES = 10
 
     def __init__(
         self,
@@ -123,7 +123,6 @@ class LLMAgent:
 
         base_system = (
             "You are an AI playing Diplomacy. Play faithfully to your personality. "
-            "Always try to move the game forward and avoid stalemate per your objectives. "
             "Use only 3-letter power codes (AUS, ENG, FRA, GER, ITA, RUS, TUR). "
             "Output valid JSON with exactly two fields in this order: 'reasoning' (list of strings) and 'orders' (list of strings)."
         )
@@ -255,8 +254,8 @@ class LLMAgent:
         engine_recommendations = ""
         if phase_type != "M":
             engine_recommendations = f"""
-=== ENGINE SUGGESTED MOVES ===
-IMPORTANT: These may or may not not align with your diplomatic goals. Feel free to use or ignore them at your discretion.
+=== BEST DEFAULT MOVES ===
+IMPORTANT: These are the best moves with no cooperation. Feel free to ignore them if coordinating with other players.
 {observation["rl_recommendations"][self.power_name]}
 """
 
@@ -276,7 +275,7 @@ IMPORTANT: These may or may not not align with your diplomatic goals. Feel free 
                 "- 'F ENG C A LON-BRE' (fleet convoys army from London to Brest)"
                 "Notes: "
                 "If convoying your own units, you need to issue an order for both the fleet and the army being convoyed. "
-                "Chain convoy possibilities are not shown on the strategic overview, only single convoys. Chain convoys ARE possible, but you will need to determine them yourself based on the game state. "
+                "Chain convoy possibilities are not shown on the strategic overview, only single convoys. Chain convoys ARE possible, but you will need to determine them yourself based on the game state."
             )
         elif phase_type == "R":
             order_syntax = (
@@ -309,7 +308,7 @@ Personality: {self.personality}
 === GAME PHASE ===
 Current phase: {phase}
 
-=== TIPS TO WIN AT DIPLOMACY ===
+=== TIPS TO WIN ===
 {GENERAL_PLAY_TIPS}
 {engine_recommendations}
 === RECENT PRIVATE JOURNAL ===
@@ -425,13 +424,12 @@ Update your private journal, briefly noting your observations and the move. Retu
             prompt_text = f"""
 === PHASE & TIMING ===
 Phase: {observation["phase"]}
-Negotiation Round: {sub_round_index} of {self.NUM_MISSIVES}{final_round_note}
 
 === YOUR POWER ===
 Your Nation: {self.power_name}
 Personality: {self.personality}
 
-=== TIPS TO WIN AT DIPLOMACY ===
+=== TIPS TO WIN ===
 {GENERAL_PLAY_TIPS}
 
 === GAME STATE ===
@@ -440,8 +438,8 @@ Personality: {self.personality}
 === STRATEGIC OVERVIEW ===
 {observation["strategic_overview"]}
 
-=== ENGINE SUGGESTED MOVES ===
-IMPORTANT: These may or may not not align with your diplomatic goals. Feel free to use or ignore them at your discretion.
+=== BEST DEFAULT MOVES ===
+IMPORTANT: These are the best moves with no cooperation. Feel free to ignore them if coordinating with other players.
 {observation["rl_recommendations"][self.power_name]}
 
 === RECENT MOVES ===
@@ -462,8 +460,9 @@ IMPORTANT: These may or may not not align with your diplomatic goals. Feel free 
 === NEW INCOMING MESSAGES ===
 {to_respond}
 === INSTRUCTIONS ===
-You can send up to 3 short missives in this round of communications to each recipient to respond to incoming messages.
+You can send up to 3 short missives in this round of communications to respond to incoming messages.
 Use 3-letter codes to designate recipients.
+IMPORTANT: reply to new incoming messages only!
 
 Convoy Rules:
 - If convoying with another player, you must both negotiate and verify the move is valid & listed in strategic overview
@@ -473,8 +472,8 @@ Convoy Rules:
 Tips:
 - Other than diplomacy, this is the time to coordinate specific attacks and defensive maneuvers with other powers.
 - Diplomacy isn't just words, it's about backing your commitments with specific actions. It's about what you can offer and what you can extract.
-- DO NOT reveal you are an AI player. Play as if you are a human player.
-- Move the game forward and avoid stalemate.
+- DO NOT reveal you are an AI player.
+- Messages should be short and to the point. Avoid long-winded explanations.
 
 Return valid JSON with a 'missives' list containing up to 3 missives, each with:
 - 'recipients': list of 3-letter codes, you can only list one recipient
@@ -496,7 +495,7 @@ No extra commentary in response.
 
             system_text = (
                 "You are an AI Diplomacy player. This is the negotiation stage where missives can be sent to further your interests. "
-                "Play faithfully to your personality profile. Always try to move the game forward per your objectives. "
+                "Play faithfully to your personality profile."
                 "Only output valid JSON with the key 'missives'. Use 3-letter codes for powers."
             )
 
@@ -637,7 +636,7 @@ Use only 3-letter codes for powers.
             formatted_log.append(f"=== Conversation history with {interlocutor} ===")
             for msg in messages:
                 formatted_log.append(f"{msg['sender']}: {msg['body']}")
-            formatted_log.append("")
+            formatted_log.append("\n")
 
         """ for subround in inbox_history:
             if not subround["conversations"]:

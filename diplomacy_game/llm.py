@@ -99,7 +99,7 @@ def generate(
             response.raise_for_status()
             
             llm_response = response.json()["choices"][0]["message"]["content"]
-            #logger.debug(f"LLM raw response: {llm_response}")
+            logger.debug(f"LLM raw response: {llm_response}")
             #print(llm_response)
             return llm_response
 
