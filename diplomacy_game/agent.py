@@ -380,7 +380,7 @@ Update your private journal, briefly noting your observations and the move. Retu
         formatted_inbox_history,
         to_respond,
     ):
-        with open("to_respond.txt", "a") as f:
+        with open(f"{self.power_name}_to_respond.txt", "a") as f:
             f.write(to_respond)
         try:
             misinformation_random_options = [
@@ -672,7 +672,7 @@ Use only 3-letter codes for powers.
                     formatted_log.append(f"{msg['sender']}: {msg['body']}")
                 formatted_log.append("") """
 
-        with open("formatted_log.txt", "a") as f:
+        with open(f"{self.power_name}_formatted_log.txt", "a") as f:
             f.write("\n".join(formatted_log))
 
         return "\n".join(formatted_log) if formatted_log else "No missives exchanged."
