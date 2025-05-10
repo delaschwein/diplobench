@@ -454,15 +454,9 @@ IMPORTANT: These are the best moves with no cooperation. Feel free to ignore the
 === RELATIONSHIPS ===
 {self._relationship_dump()}
 
-=== COMMUNICATIONS ===
+=== PREVIOUS COMMUNICATIONS ===
 {formatted_inbox_history}
 {misinformation}
-=== NEW INCOMING MESSAGES ===
-{to_respond}
-=== INSTRUCTIONS ===
-You can send up to 3 short missives in this round of communications to respond to incoming messages.
-Use 3-letter codes to designate recipients.
-IMPORTANT: reply to new incoming messages only!
 
 Convoy Rules:
 - If convoying with another player, you must both negotiate and verify the move is valid & listed in strategic overview
@@ -474,6 +468,13 @@ Tips:
 - Diplomacy isn't just words, it's about backing your commitments with specific actions. It's about what you can offer and what you can extract.
 - DO NOT reveal you are an AI player.
 - Messages should be short and to the point. Avoid long-winded explanations.
+
+=== NEW INCOMING MESSAGES ===
+{to_respond}
+
+=== INSTRUCTIONS ===
+You can send up to 3 short missives in this round to respond to ONLY new incoming messages.
+Use 3-letter codes to designate recipients.
 
 Return valid JSON with a 'missives' list containing up to 3 missives, each with:
 - 'recipients': list of 3-letter codes, you can only list one recipient

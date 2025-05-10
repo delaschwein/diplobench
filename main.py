@@ -160,14 +160,16 @@ async def run_negotiation_phase(
             f"{x.sender[:3]}: {x.message}" for x in to_respond
         ]  # Format incoming messages
 
+        # Prevent from sending repeated messages
+        if formatted_incoming_messages:
         # Compose missives for each agent
-        missives = agents[self_power[:3]].compose_missives(
-            obs,
-            turn_index,
-            cnt,
-            formatted_inbox,
-            "\n".join(formatted_incoming_messages),
-        )
+            missives = agents[self_power[:3]].compose_missives(
+                obs,
+                turn_index,
+                cnt,
+                formatted_inbox,
+                "\n".join(formatted_incoming_messages),
+            )
 
         # Distribute missives and track history
         for msg in missives:
