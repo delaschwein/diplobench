@@ -160,6 +160,7 @@ async def run_negotiation_phase(
             f"{x.sender[:3]}: {x.message}" for x in to_respond
         ]  # Format incoming messages
 
+        missives = None
         # Prevent from sending repeated messages
         if formatted_incoming_messages:
         # Compose missives for each agent
@@ -172,30 +173,31 @@ async def run_negotiation_phase(
             )
 
         # Distribute missives and track history
-        for msg in missives:
-            recipients = msg.get("recipients", [])
-            if len(recipients) > 1:
-                continue
+        if missives:
+            for msg in missives:
+                recipients = msg.get("recipients", [])
+                if len(recipients) > 1:
+                    continue
 
-            if recipients[0] not in POWER_CODES or recipients[0] == self_power[:3]:
-                continue
+                if recipients[0] not in POWER_CODES or recipients[0] == self_power[:3]:
+                    continue
 
-            body = msg.get("body", "")
-            if not body.strip():
-                continue
+                body = msg.get("body", "")
+                if not body.strip():
+                    continue
 
-            subround_record["sent_missives"].append(
-                {"sender": self_power[:3], "recipients": recipients, "body": body}
-            )
-
-            await mila_game.send_game_message(
-                message=Message(
-                    sender=self_power,
-                    recipient=code_to_power[recipients[0]],
-                    message=body,
-                    phase=mila_game.get_current_phase(),
+                subround_record["sent_missives"].append(
+                    {"sender": self_power[:3], "recipients": recipients, "body": body}
                 )
-            )
+
+                await mila_game.send_game_message(
+                    message=Message(
+                        sender=self_power,
+                        recipient=code_to_power[recipients[0]],
+                        message=body,
+                        phase=mila_game.get_current_phase(),
+                    )
+                )
 
         negotiation_log_for_turn["subrounds"].append(subround_record)
 
