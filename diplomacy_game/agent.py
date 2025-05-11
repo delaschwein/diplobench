@@ -255,7 +255,7 @@ class LLMAgent:
         if phase_type != "M":
             engine_recommendations = f"""
 === BEST DEFAULT MOVES ===
-IMPORTANT: These are the best moves with no cooperation. Feel free to ignore them if coordinating with other players.
+IMPORTANT: These are the best default moves. Feel free to ignore them if coordinating with other players.
 {observation["rl_recommendations"][self.power_name]}
 """
 
@@ -263,16 +263,16 @@ IMPORTANT: These are the best moves with no cooperation. Feel free to ignore the
             order_syntax = (
                 "Movement phase order formats:\n"
                 "Hold: 'A <province> H' or 'F <province> H'\n"
-                "Move: 'A <province>-<province>' or 'F <province>-<province>'\n"
+                "Move: 'A <province> - <province>' or 'F <province> - <province>'\n"
                 "Support Hold: 'A <province> S A/F <province>'\n"
-                "Support Move: 'A <province> S A/F <province>-<province>'\n"
-                "Convoy: 'F <province> C A <province>-<province>'\n\n"
+                "Support Move: 'A <province> S A/F <province> - <province>'\n"
+                "Convoy: 'F <province> C A <province> - <province>'\n\n"
                 "Examples:\n"
                 "- 'A PAR H' (army in Paris holds)\n"
-                "- 'F BRE-MAO' (fleet moves Brest to Mid-Atlantic)\n"
+                "- 'F BRE - MAO' (fleet moves Brest to Mid-Atlantic)\n"
                 "- 'A BUR S A PAR' (army in Burgundy supports army in Paris)\n"
-                "- 'F ENG S F NTH-ECH' (fleet in English Channel supports fleet moving North Sea to English Channel)\n"
-                "- 'F ENG C A LON-BRE' (fleet convoys army from London to Brest)"
+                "- 'F ENG S F NTH - ECH' (fleet in English Channel supports fleet moving North Sea to English Channel)\n"
+                "- 'F ENG C A LON - BRE' (fleet convoys army from London to Brest)"
                 "Notes: "
                 "If convoying your own units, you need to issue an order for both the fleet and the army being convoyed. "
                 "Chain convoy possibilities are not shown on the strategic overview, only single convoys. Chain convoys ARE possible, but you will need to determine them yourself based on the game state."
@@ -439,7 +439,7 @@ Personality: {self.personality}
 {observation["strategic_overview"]}
 
 === BEST DEFAULT MOVES ===
-IMPORTANT: These are the best moves with no cooperation. Feel free to ignore them if coordinating with other players.
+IMPORTANT: These are the best default moves. Feel free to ignore them if coordinating with other players.
 {observation["rl_recommendations"][self.power_name]}
 
 === RECENT MOVES ===
@@ -467,13 +467,15 @@ Tips:
 - Other than diplomacy, this is the time to coordinate specific attacks and defensive maneuvers with other powers.
 - Diplomacy isn't just words, it's about backing your commitments with specific actions. It's about what you can offer and what you can extract.
 - DO NOT reveal you are an AI player.
-- Messages should be short and to the point. Avoid long-winded explanations.
+- Messages should be as short as possible and to the point. Avoid long-winded explanations.
+- Break multiple-sentence response into short missives.
 
 === NEW INCOMING MESSAGES ===
 {to_respond}
 
 === INSTRUCTIONS ===
-You can send up to 3 short missives in this round to respond to ONLY new incoming messages.
+You can send up to 3 short missives for each new incoming message.
+You can ignore the incoming message if you choose.
 Use 3-letter codes to designate recipients.
 
 Return valid JSON with a 'missives' list containing up to 3 missives, each with:
