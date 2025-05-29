@@ -17,7 +17,7 @@ from diplomacy.engine.message import Message
 load_dotenv()
 DEFAULT_MODEL = os.getenv("DEFAULT_AGENT_MODEL", "openai/gpt-4o-mini")
 TEST_MODEL = os.getenv("TEST_AGENT_MODEL", "openai/gpt-4o-mini")
-PRESUBMIT_SECOND = os.getenv("PRESUBMIT_SECOND", 45)
+PRESUBMIT_SECOND = os.getenv("PRESUBMIT_SECOND", 40)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ async def run_negotiation_phase(
         if presubmit:
             break
         # for sub_i in range(1, negotiation_subrounds + 1):
-        logger.info(f"Negotiation sub-round {cnt}/{negotiation_subrounds}")
+        logger.info(f"Negotiation sub-round {cnt}")
 
         # add incoming message to inbox
         current_messages = mila_game.messages
@@ -162,42 +162,40 @@ async def run_negotiation_phase(
 
         missives = None
         # Prevent from sending repeated messages
-        if formatted_incoming_messages:
         # Compose missives for each agent
-            missives = agents[self_power[:3]].compose_missives(
-                obs,
-                turn_index,
-                cnt,
-                formatted_inbox,
-                "\n".join(formatted_incoming_messages),
-            )
+        missives = agents[self_power[:3]].compose_missives(
+            obs,
+            turn_index,
+            cnt,
+            formatted_inbox,
+            "\n".join(formatted_incoming_messages),
+        )
 
         # Distribute missives and track history
-        if missives:
-            for msg in missives:
-                recipients = msg.get("recipients", [])
-                if len(recipients) > 1:
-                    continue
+        for msg in missives:
+            recipients = msg.get("recipients", [])
+            if len(recipients) > 1:
+                continue
 
-                if recipients[0] not in POWER_CODES or recipients[0] == self_power[:3]:
-                    continue
+            if recipients[0] not in POWER_CODES or recipients[0] == self_power[:3]:
+                continue
 
-                body = msg.get("body", "")
-                if not body.strip():
-                    continue
+            body = msg.get("body", "")
+            if not body.strip():
+                continue
 
-                subround_record["sent_missives"].append(
-                    {"sender": self_power[:3], "recipients": recipients, "body": body}
+            subround_record["sent_missives"].append(
+                {"sender": self_power[:3], "recipients": recipients, "body": body}
+            )
+
+            await mila_game.send_game_message(
+                message=Message(
+                    sender=self_power,
+                    recipient=code_to_power[recipients[0]],
+                    message=body,
+                    phase=mila_game.get_current_phase(),
                 )
-
-                await mila_game.send_game_message(
-                    message=Message(
-                        sender=self_power,
-                        recipient=code_to_power[recipients[0]],
-                        message=body,
-                        phase=mila_game.get_current_phase(),
-                    )
-                )
+            )
 
         negotiation_log_for_turn["subrounds"].append(subround_record)
 
@@ -269,8 +267,8 @@ async def run_negotiation_phase(
     return negotiation_log_for_turn, last_replied_timestamp
 
 
-def setup_new_game(game_id, negotiation_subrounds, self_power):
-    env = DiplomacyEnvironment()
+def setup_new_game(game_id, negotiation_subrounds, self_power, game_state_dict):
+    env = DiplomacyEnvironment(game_state_dict=game_state_dict)
 
     power_codes = (
         env.get_power_names()
@@ -467,6 +465,9 @@ async def main():
     mila_phase = None
     orderable_units = {}  # maybe useful
     mila_self_orders = []
+    do_nothing = False
+
+    mila_state = mila_game.get_state()
 
     env, agents = None, None
     if args.resume:
@@ -476,11 +477,11 @@ async def main():
         else:
             logger.info("No valid save found or load failed. Starting new game.")
             env, agents = setup_new_game(
-                args.game_id, args.negotiation_subrounds, power_abbr
+                args.game_id, args.negotiation_subrounds, power_abbr, mila_state
             )
     else:
         env, agents = setup_new_game(
-            args.game_id, args.negotiation_subrounds, power_abbr
+            args.game_id, args.negotiation_subrounds, power_abbr, mila_state
         )
 
     if not hasattr(env, "negotiation_history"):
@@ -505,6 +506,13 @@ async def main():
         msgs_until_prev_movement = []
 
         if mila_phase != mila_game_state["name"]:
+            # Phase has changed, update environment
+            # clear previous orders
+            mila_self_orders = []
+
+            # do something
+            do_nothing = False
+
             mila_phase = mila_game_state["name"]
             logging.info(f"Advance to: {mila_phase}")
 
@@ -518,8 +526,16 @@ async def main():
                         power_abbr, orders
                     )  # resetting env orders, without mapping/valid order check
                 env.step()
+                logger.info(
+                    f"Processed {mila_phase}"
+                )
 
             orderable_units = mila_game_state["state"]["units"]  # maybe useful
+
+        if do_nothing:
+            logger.info(f"Wait until new phase...")
+            await asyncio.sleep(5)
+            continue
 
         # wait for order recs
         if (
@@ -536,7 +552,7 @@ async def main():
                 await asyncio.sleep(1)
                 continue
 
-        current_phase = env.get_current_phase()
+        current_phase = mila_game.get_current_phase()
         phase_type = current_phase[-1]
 
         # --- Get RL Recommendations ---
@@ -547,21 +563,21 @@ async def main():
 
         # for pwr in POWER_CODES:
         #    rl_recommendations[pwr] = recommendation_engine.get_recommendations(env.game, pwr)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print(rl_recommendations)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        #print(rl_recommendations)
+        #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         if current_phase.startswith("S"):
             year_count += 1
             logger.info(f"\n====== YEAR {year_count} ======")
             turn_count += 1
 
-        logger.info(f"\n=== PHASE: {current_phase} ===")
+        #logger.info(f"\n=== PHASE: {current_phase} ===")
 
-        logger.info("Current game state:")
+        #logger.info("Current game state:")
         state = env.game.get_state()
-        logger.info(f"Supply centers: {state.get('centers', {})}")
-        logger.info(f"Units: {state.get('units', {})}")
+        #logger.info(f"Supply centers: {state.get('centers', {})}")
+        #logger.info(f"Units: {state.get('units', {})}")
 
         # ----------- SAVE VALID MOVES TO RESULTS FILE FOR EACH POWER AT THIS PHASE -----------
         with open("results.txt", "a") as results_file:
@@ -595,18 +611,22 @@ async def main():
             logger.info("=== MOVEMENT PHASE ===")
             if args.negotiate:
                 logger.info("Starting negotiation rounds...")
-                negotiation_log, last_msg_timestamp = await run_negotiation_phase(
-                    env,
-                    mila_game,
-                    agents,
-                    turn_count,
-                    rl_recommendations,
-                    args.negotiation_subrounds,
-                    unread_messages=msgs_until_prev_movement,
-                    self_power=args.power,
-                )
-                env.negotiation_history.append(negotiation_log)
-                last_received_timestamp = last_msg_timestamp
+                try:
+                    negotiation_log, last_msg_timestamp = await run_negotiation_phase(
+                        env,
+                        mila_game,
+                        agents,
+                        turn_count,
+                        rl_recommendations,
+                        args.negotiation_subrounds,
+                        unread_messages=msgs_until_prev_movement,
+                        self_power=args.power,
+                    )
+                    env.negotiation_history.append(negotiation_log)
+                    last_received_timestamp = last_msg_timestamp
+                except Exception as e:
+                    logger.error(f"Error during negotiation phase: {e}")
+                    continue
 
             logger.info("Collecting movement orders from all powers...")
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -643,6 +663,7 @@ async def main():
                             )
                             agent.journal.extend(new_journal)
                         # ------------------------------------------------------------
+                        do_nothing = True  # do nothing after orders are issued
                     except Exception as e:
                         logger.error(f"Error getting orders from {pwr}: {e}")
 
@@ -677,6 +698,8 @@ async def main():
                         )
                         order_maps[pwr] = mappings
                         accepted_orders[pwr] = valid_orders
+
+                        do_nothing = True  # do nothing after orders are issued
 
                         # agent = agents[pwr]
                         # new_journal = agent.journal_after_orders(reasoning, orders, obs)
@@ -735,6 +758,7 @@ async def main():
                             )
                             agent.journal.extend(new_journal)
                         # ------------------------------------------------------------
+                        do_nothing = True  # do nothing after orders are issued
                     except Exception as e:
                         logger.error(f"Error getting adjustment orders from {pwr}: {e}")
 

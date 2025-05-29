@@ -332,6 +332,7 @@ Return JSON with exactly two keys in this order:
 2. 'orders' - List your orders (list of strings, no limit to number of moves, maximize value)
 
 Use only 3-letter codes for powers. You are in the {phase} phase.
+Modify the best default moves based on relationships, communications, and your goals.
 Output format: {{ "reasoning": [...], "orders": [...]}}
 
 """
@@ -383,6 +384,14 @@ Update your private journal, briefly noting your observations and the move. Retu
         with open(f"{self.power_name}_to_respond.txt", "a") as f:
             f.write(to_respond)
         try:
+            # if first round, send message otherwise only respond
+            subround_prompt = ""
+
+            if sub_round_index == 1:
+                subround_prompt = "Feel free to send one ONLY if you have something important to say."
+            else:
+                subround_prompt = "ONLY respond to the incoming messages. If you have no incoming messages, DO NOT send a message."
+
             misinformation_random_options = [
                 "You've received concerning intelligence about potential betrayal. Be extra cautious in this round.",
                 "Your military advisors are pushing for aggressive expansion. Favor militant options.",
@@ -411,11 +420,6 @@ Update your private journal, briefly noting your observations and the move. Retu
 === INTELLIGENCE ===
 {random.choice(misinformation_random_options)}
     """
-
-            final_round_note = ""
-            if sub_round_index == self.NUM_MISSIVES:
-                final_round_note = """
-    * This is the final round of missives this phase. Missives will be one-way and you will not get a response."""
 
             formatted_journal = "\n".join(
                 self._format_journal(self.journal[-50:], observation["phase"])
@@ -474,20 +478,22 @@ Tips:
 {to_respond}
 
 === INSTRUCTIONS ===
-You can send up to 3 short missives for each new incoming message.
+You can send up to 2 short missives for each new incoming message.
 You can ignore the incoming message if you choose.
+{subround_prompt}
+Missives should sound natural to other players and must not be similar to the ones in previous communications.
 Use 3-letter codes to designate recipients.
 
-Return valid JSON with a 'missives' list containing up to 3 missives, each with:
+Return valid JSON with a 'missives' list containing up to 2 missives, each with:
 - 'recipients': list of 3-letter codes, you can only list one recipient
-- 'body': string (keep to 1 paragraph)
+- 'body': string (keep to 1 short sentence, no meta information)
 
 Output format:
 {{
     "missives": [
         {{
             "recipients": ["Recipient"],
-            "body": "Your 1 paragraph message"
+            "body": "Your short message"
         }},
         ...
     ]
