@@ -329,9 +329,7 @@ IMPORTANT: These are the best default moves. Feel free to ignore them if coordin
 === YOUR POWER ===
 Power: {self.power_name}
 Personality: {self.personality}
-
-=== GAME PHASE ===
-Current phase: {phase}
+Phase: {phase}
 
 **General Strategic Principles for Victory:**
 {GENERAL_PLAY_TIPS}
@@ -374,9 +372,8 @@ Output format: {{ "reasoning": [...], "orders": [...]}}
         # combined_text_missives = json.dumps(combined_missives, indent=2)
 
         prompt = f"""
-=== PHASE & POWER ===
+Power: {self.power_name}
 Phase: {phase}
-Your Power: {self.power_name}
 
 === GAME STATE ===
 {json.dumps(observation.get("board_state", {}), indent=2)}
@@ -391,7 +388,38 @@ Your Power: {self.power_name}
 {orders}
 
 === INSTRUCTIONS ===
-Update your private journal, briefly noting your observations and the move. Return JSON:
+Create a concise summary (200-300 words) that captures the essential strategic developments from {year}. Focus on:
+
+1. Diplomatic Evolution
+   - Alliances formed, maintained, or broken
+   - Trust relationships established or shattered
+   - Key negotiations and their outcomes
+
+2. Strategic Position
+   - Supply centers gained or lost
+   - Critical battles won or lost
+   - Strategic breakthroughs or setbacks
+   - Changes in board position relative to other powers
+
+3. Military Actions
+   - Successful attacks or defenses
+   - Key supports that worked or failed
+   - Convoy operations
+   - Stalemate lines formed or broken
+
+4. Trust Assessment
+   - Which powers proved reliable
+   - Who betrayed agreements
+   - Patterns of behavior observed
+
+5. Lessons Learned
+   - Strategic insights gained
+   - Mistakes to avoid
+   - Successful tactics to repeat
+
+Maintain the first-person perspective of {self.power_name} and preserve critical strategic insights while condensing operational details. The summary should provide sufficient context for future strategic planning.
+
+Return JSON:
 {{
   "journal_update": ["...", "..."]
 }}
@@ -449,14 +477,11 @@ Update your private journal, briefly noting your observations and the move. Retu
             )
 
             prompt_text = f"""
-=== PHASE & TIMING ===
+Power: {self.power_name}
+Personality: {self.personality}
 Phase: {observation["phase"]}
 
-=== YOUR POWER ===
-Your Nation: {self.power_name}
-Personality: {self.personality}
-
-=== TIPS TO WIN ===
+**General Strategic Principles for Victory:**
 {GENERAL_PLAY_TIPS}
 
 === GAME STATE ===
@@ -475,7 +500,7 @@ IMPORTANT: These are the best default moves. Feel free to ignore them if coordin
 === LAST PHASE OUTCOMES ===
 {observation.get("last_turn_outcomes", "")}
 
-=== RECENT PRIVATE JOURNAL ===
+=== RECENT PRIVATE JOURNAL (Your inner thoughts and plans) ===
 {formatted_journal}
 
 === RELATIONSHIPS ===
@@ -485,10 +510,9 @@ IMPORTANT: These are the best default moves. Feel free to ignore them if coordin
 {formatted_inbox_history}
 {misinformation}
 
-Convoy Rules:
-- If convoying with another player, you must both negotiate and verify the move is valid & listed in strategic overview
-- For convoying your own units, issue orders for both the fleet and the army being convoyed
-- Chain convoys ARE possible but must be determined from game state - only single convoys shown in overview
+=== NEW INCOMING MESSAGES ===
+{to_respond}
+
 
 Tips:
 - Other than diplomacy, this is the time to coordinate specific attacks and defensive maneuvers with other powers.
@@ -497,21 +521,49 @@ Tips:
 - Messages should be as short as possible and to the point. Avoid long-winded explanations.
 - Break multiple-sentence response into short missives.
 
-=== NEW INCOMING MESSAGES ===
-{to_respond}
-
 === INSTRUCTIONS ===
-You can send up to 2 short missives for each new incoming message.
-You can ignore the incoming message if you choose.
 {subround_prompt}
+
+Generate up to 2 short missives to advance your interests.
+Always prioritize responding to the messages in the "NEW INCOMING MESSAGES" section.
+
+- Ensure recipient names are spelled correctly if sending private messages.
+- Think strategically about *why* you are sending each message and what outcome you hope to achieve.
+- When responding to a message, explicitly acknowledge what was said and reference specific points.
+- For ongoing conversations, maintain thread continuity by referencing previous exchanges.
+- If another power has made a specific proposal or request, address it directly in your response.
+- When making agreements, be clear about what you are committing to and what you expect in return.
+- If you need to quote something, only use single quotes in the actual messages so as not to interfere with the JSON structure.
+
+Consider:
+- Your current goals
+- Relationships with other powers
+- Ongoing conversations and the need to maintain consistent threads
+- Messages that need direct responses in the "NEW INCOMING MESSAGES" section
+- Powers that have been ignoring your messages (adjust your approach accordingly)
+
+When dealing with non-responsive powers:
+- Ask direct questions that demand yes/no answers
+- Make public statements that force them to clarify their position
+- Shift diplomatic efforts to more receptive powers
+- Consider their silence as potentially hostile
+
+Message purposes can include:
+- Responding to specific requests or inquiries (highest priority)
+- Proposing alliances or support moves
+- Issuing warnings or making threats
+- Gathering intelligence about other powers' intentions
+- Coordinating moves and suggesting tactical options
+- Strategic deception when appropriate to your goals
+
 Missives should sound natural to other players and must not be similar to the ones in previous communications.
 Use 3-letter codes to designate recipients.
 
-Return valid JSON with a 'missives' list containing up to 2 missives, each with:
+Return ONLY valid JSON with a 'missives' list containing up to 2 missives, each with:
 - 'recipients': list of 3-letter codes, you can only list one recipient
-- 'body': string (keep to 1 short sentence, no meta information)
+- 'body': string (keep to 1 short sentence)
 
-Output format:
+Response format:
 {{
     "missives": [
         {{
@@ -522,7 +574,21 @@ Output format:
     ]
 }}
 
-No extra commentary in response.
+Example:
+{{
+    "missives": [
+        {{
+            "recipients": ["ENG"],
+            "body": "Do you wanna keep bouncing in Gal or agree to make it a DMZ?"
+        }},
+        {{
+            "recipients": ["FRA"],
+            "body": "I am moving into BUR btw, and will support you into PAR in fall"
+        }}
+    ]
+}}
+
+JSON ONLY BELOW (DO NOT PREPEND WITH ```json or ``` or any other text)
 """
 
             system_text = (
@@ -574,12 +640,9 @@ No extra commentary in response.
         Summarizes the negotiation phase for private journaling.
         """
         prompt_text = f"""
-=== PHASE & TIMING ===
-Phase: {observation["phase"]}
-
-=== YOUR POWER ===
-Your Nation: {self.power_name}
+Power: {self.power_name}
 Personality: {self.personality}
+Phase: {observation["phase"]}
 
 === GAME STATE ===
 {json.dumps(observation.get("board_state", {}), indent=2)}
