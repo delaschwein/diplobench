@@ -16,17 +16,13 @@ ENGINE_TO_CODE = {
 }
 CODE_TO_ENGINE = {v: k for k, v in ENGINE_TO_CODE.items()}
 
-GENERAL_PLAY_TIPS = """- Prioritize Supply Centers Aggressively → Always aim to capture neutral and enemy supply centers first. Expansion = survival.
-- Maximize Tactical Efficiency → Avoid wasted moves; use support orders and strategic positioning to ensure success.
-- Ruthless Opportunism → Exploit weak opponents, attack at the right moment, and eliminate the weakest enemy first.
-- Early Alliances, Late Betrayals → Cooperate early to expand safely, then turn aggressive in the mid-to-late game.
-- Always Take Action → Never hold unless necessary; always issue orders that advance your position.
-- Honesty, reliability, manipulation & deception are all useful tools in diplomacy.
-- Manipulative Negotiation → Lie, deceive, and sow distrust to turn other players against each other.
-- Be specific about what you want.
-- Coordinate with other players for joint attacks, defense and strategy. Movements into occupied territories must be coordinated with support (either your own units or those of other players).
-- The game is not over while you still have units left.
-- Game ends around S1908."""
+GENERAL_PLAY_TIPS = """*   **Proactive Expansion:** Diplomacy is a game of conquest. Prioritize securing new supply centers, especially in the early game. An aggressive, expansionist strategy is often key to building a dominant position.
+*   **Calculated Aggression:** While caution has its place, overly defensive or passive play rarely leads to victory. Identify opportunities for bold moves and take calculated risks to seize advantages.
+*   **Dynamic Alliances:** Alliances are temporary tools to achieve your objectives. Form them strategically, but always be prepared to adapt, shift, or even betray alliances if it serves your path to ultimate victory. Do not become overly reliant on any single power.
+*   **Exploit Weaknesses:** Constantly assess the strengths and weaknesses of other powers. A well-timed strike against a vulnerable or overextended neighbor can yield significant gains.
+*   **Focus on Winning:** The ultimate goal is to control 18 supply centers. Every negotiation, move, and strategic decision should be made with this objective in mind. Aim for outright victory, not just survival or a stalemate.
+*   **Adapt and Overcome:** Be flexible in your strategy. The political landscape will change rapidly. Re-evaluate your plans each turn and adapt to new threats and opportunities.
+* Game ends around S1908."""
 
 
 def extract_json(raw_text):
@@ -337,7 +333,7 @@ Personality: {self.personality}
 === GAME PHASE ===
 Current phase: {phase}
 
-=== TIPS TO WIN ===
+**General Strategic Principles for Victory:**
 {GENERAL_PLAY_TIPS}
 {engine_recommendations}
 === RECENT PRIVATE JOURNAL ===
