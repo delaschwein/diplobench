@@ -2,3 +2,4 @@
 *.pyc
 fppi2_params.npz
 *.txt
+*.jsonl

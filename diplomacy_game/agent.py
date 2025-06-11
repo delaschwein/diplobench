@@ -157,6 +157,22 @@ class LLMAgent:
             new_orders = data.get("orders", [])
 
         logger.info(f"{self.power_name} orders: {new_orders}")
+
+        with open(f"{self.power_name}_orders.jsonl", "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "phase": phase,
+                        "reasoning": reasoning,
+                        "initial_orders": observation.get("rl_recommendations", {}).get(
+                            self.power_name, []
+                        ),
+                        "orders": new_orders,
+                    }
+                )
+                + "\n"
+            )
+
         return reasoning, new_orders
 
     def journal_after_orders(
@@ -194,6 +210,19 @@ class LLMAgent:
             new_journal = ["[LLM returned invalid JSON in journal_after_orders]"]
         else:
             new_journal = data.get("journal_update", [])
+
+        with open(f"{self.power_name}_journal.jsonl", "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "phase": observation["phase"],
+                        "reasoning": reasoning,
+                        "orders": orders,
+                        "journal_update": new_journal,
+                    }
+                )
+                + "\n"
+            )
 
         return new_journal
 
@@ -381,8 +410,6 @@ Update your private journal, briefly noting your observations and the move. Retu
         formatted_inbox_history,
         to_respond,
     ):
-        with open(f"{self.power_name}_to_respond.txt", "a") as f:
-            f.write(to_respond)
         try:
             # if first round, send message otherwise only respond
             subround_prompt = ""
@@ -621,6 +648,20 @@ Use only 3-letter codes for powers.
             intent = data.get("intent", "")
             rship_updates = data.get("rship_updates", [])
 
+        with open(f"{self.power_name}_summary.jsonl", "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "phase": observation["phase"],
+                        "prior_move_summary": summary,
+                        "negotiation_summary": data.get("negotiation_summary", ""),
+                        "intent": intent,
+                        "rship_updates": rship_updates,
+                    }
+                )
+                + "\n"
+            )
+
         return summary, intent, rship_updates
 
     def format_inbox_history(self, convos):
@@ -680,9 +721,6 @@ Use only 3-letter codes for powers.
                 for msg in messages:
                     formatted_log.append(f"{msg['sender']}: {msg['body']}")
                 formatted_log.append("") """
-
-        with open(f"{self.power_name}_formatted_log.txt", "a") as f:
-            f.write("\n".join(formatted_log))
 
         return "\n".join(formatted_log) if formatted_log else "No missives exchanged."
 

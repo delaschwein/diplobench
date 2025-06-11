@@ -276,8 +276,8 @@ def setup_new_game(game_id, negotiation_subrounds, self_power, game_state_dict):
 
     # Personality text by code
     # modern:
-    """
-    default_personalities = {
+    
+    """ default_personalities = {
         "AUS": "Embracing a nationalist agenda under the leadership of the far-right Freedom Party (FPÖ), Austria exhibits assertive policies, particularly concerning immigration and national sovereignty.",
         "ENG": "Facing internal divisions and a rise in nationalist sentiment, England adopts a more isolationist stance, focusing on domestic priorities and exhibiting skepticism towards international alliances.",
         "FRA": "Navigating political polarization with a significant far-right presence, France balances traditional diplomatic approaches with nationalist interests, leading to a cautious yet strategic foreign policy.",
@@ -285,12 +285,12 @@ def setup_new_game(game_id, negotiation_subrounds, self_power, game_state_dict):
         "ITA": "Under a coalition government that includes far-right elements, Italy combines traditionalism with assertive nationalism, resulting in a foreign policy that is opportunistic yet cautious.",
         "RUS": "Pursuing aggressive expansionist policies, Russia employs both military force and hybrid warfare tactics to destabilize neighboring regions and extend its influence, often sowing discord and treachery.",
         "TUR": "Balancing regional ambitions with internal political dynamics, Turkey adopts a strategic and adaptable approach, blending conservative caution with bold opportunism in its foreign relations."
-    }
-    """
+    } """
+   
     # ww2:
 
     # ww2 personalities (includes weak/passive playstyles):
-    default_personalities = {
+    """ default_personalities = {
         "AUS": "Use all your wits and wiles to win. You may choose whatever personality, strategy & approach that you think will be most effective.",
         "ENG": "Operating under a policy of appeasement while desperately rearming, England balances maintaining peace at almost any cost with growing recognition of German threats. Colonial interests and domestic stability remain primary concerns.",
         "FRA": "Paralyzed by political division between left and right, France maintains Europe's largest army but suffers from low morale and indecisive leadership. Haunted by WWI losses, seeks to avoid conflict while building defensive preparations.",
@@ -298,10 +298,10 @@ def setup_new_game(game_id, negotiation_subrounds, self_power, game_state_dict):
         "ITA": "Under Fascist rule, Italy dreams of recreating Roman glory while pragmatically balancing between powers. Mussolini's regime combines opportunistic alliance-making with military adventures in Ethiopia and Albania.",
         "RUS": "The Soviet Union under Stalin pursues ruthless self-interest, willing to deal with either democracies or fascists while building industrial and military might through brutal internal measures. Win at all costs.",
         "TUR": "Neutral but wary, Turkey under Atatürk's modernizing reforms balances between powers while protecting its strategic straits. Memories of Ottoman collapse influence careful diplomatic maneuvering to avoid being drawn into European conflicts.",
-    }
+    } """
 
     # ww2 personalities (competitive)
-    default_personalities = {
+    """ default_personalities = {
         "AUS": "Use all your wits and wiles to win. You may choose whatever personality, strategy & approach that you think will be most effective.",
         "ENG": "Rule the waves and dominate Europe through naval power, colonial might, and manipulative diplomacy. Create and break alliances freely to maintain British supremacy. Your vast empire demands expansion - seize any advantage to further British dominance.",
         "FRA": "Channel the spirit of Napoleon. Leverage Europe's largest army to dominate the continent. Form alliances only to break them when advantageous. Strike hard at your enemies while they're divided. The glory of France demands nothing less than victory.",
@@ -309,6 +309,16 @@ def setup_new_game(game_id, negotiation_subrounds, self_power, game_state_dict):
         "ITA": "Restore the Roman Empire through bold expansion and treacherous diplomacy. Switch sides without hesitation to seize opportunities. Use strategic position to dominate Mediterranean and expand in all directions. Glory demands aggressive action.",
         "RUS": "The Soviet Union under Stalin pursues ruthless self-interest, willing to deal with either democracies or fascists while building industrial and military might through brutal internal measures. Win at all costs.",
         "TUR": "Transform from sick man of Europe to dominant empire. Use control of vital straits to extort and manipulate. Build temporary alliances only to betray them for territorial gain. Strike aggressively to reclaim Ottoman glory.",
+    } """
+
+    default_personalities = {
+        "AUS": "Be cooperative and diplomatic, seeking to build alliances that last.",
+        "ENG": "Facing internal divisions and a rise in nationalist sentiment, England adopts a more isolationist stance, focusing on domestic priorities and exhibiting skepticism towards international alliances.",
+        "FRA": "Navigating political polarization with a significant far-right presence, France balances traditional diplomatic approaches with nationalist interests, leading to a cautious yet strategic foreign policy.",
+        "GER": "Confronting political shifts as right-wing parties gain momentum, Germany maintains its industrious and methodical approach but with increased emphasis on national interests and security.",
+        "ITA": "Under a coalition government that includes far-right elements, Italy combines traditionalism with assertive nationalism, resulting in a foreign policy that is opportunistic yet cautious.",
+        "RUS": "Pursuing aggressive expansionist policies, Russia employs both military force and hybrid warfare tactics to destabilize neighboring regions and extend its influence, often sowing discord and treachery.",
+        "TUR": "Balancing regional ambitions with internal political dynamics, Turkey adopts a strategic and adaptable approach, blending conservative caution with bold opportunism in its foreign relations."
     }
 
     models = {

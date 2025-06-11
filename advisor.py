@@ -17,6 +17,7 @@ from chiron_utils.bots.baseline_bot import BaselineBot, BotType
 from diplomacy.utils.constants import SuggestionType
 from typing import Any, List, Mapping, Optional, Set
 from abc import ABC
+import json
 
 load_dotenv()
 DEFAULT_MODEL = os.getenv("DEFAULT_AGENT_MODEL", "openai/gpt-4o-mini")
@@ -138,8 +139,6 @@ async def run_negotiation_phase(
             "conversations": convos,
         }
 
-        print("to_respond: ", incoming_messages)
-
         if mila_game.powers[self_power].is_eliminated():
             sys.exit(0)
         
@@ -232,6 +231,19 @@ async def run_negotiation_phase(
             final_inbox_snapshot[pwr],
             formatted_inbox,
         )
+
+        with open(f"negotiation_summary_{pwr}.jsonl", "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "turn_index": turn_index,
+                        "power": pwr,
+                        "summary": summary,
+                        "intent": intent,
+                        "relationships": rship_updates,
+                    }
+                ) + "\n"
+            )
 
         agents[pwr].journal.append(
             f"{env.get_current_phase()} Negotiation summary: {summary}"
