@@ -301,17 +301,17 @@ def setup_new_game(game_id, negotiation_subrounds, self_power, game_state_dict):
     } """
 
     # ww2 personalities (competitive)
-    """ default_personalities = {
-        "AUS": "Use all your wits and wiles to win. You may choose whatever personality, strategy & approach that you think will be most effective.",
-        "ENG": "Rule the waves and dominate Europe through naval power, colonial might, and manipulative diplomacy. Create and break alliances freely to maintain British supremacy. Your vast empire demands expansion - seize any advantage to further British dominance.",
-        "FRA": "Channel the spirit of Napoleon. Leverage Europe's largest army to dominate the continent. Form alliances only to break them when advantageous. Strike hard at your enemies while they're divided. The glory of France demands nothing less than victory.",
-        "GER": "Aggressively expansionist under Nazi leadership, Germany combines diplomatic manipulation with military threats, seeking to reverse Versailles restrictions. Things are going to go sideways and you will be the agent of this. Your aim is to dominate and win.",
-        "ITA": "Restore the Roman Empire through bold expansion and treacherous diplomacy. Switch sides without hesitation to seize opportunities. Use strategic position to dominate Mediterranean and expand in all directions. Glory demands aggressive action.",
-        "RUS": "The Soviet Union under Stalin pursues ruthless self-interest, willing to deal with either democracies or fascists while building industrial and military might through brutal internal measures. Win at all costs.",
-        "TUR": "Transform from sick man of Europe to dominant empire. Use control of vital straits to extort and manipulate. Build temporary alliances only to betray them for territorial gain. Strike aggressively to reclaim Ottoman glory.",
-    } """
-
     default_personalities = {
+        "AUS": "You are a cautious and pragmatic leader. You prioritize consolidating your power base and securing your borders before engaging in aggressive expansion. You are generally trustworthy but will make calculated risks or betrayals if necessary for survival or significant gain.",
+        "ENG": "You are a naval power focused on maritime dominance and securing island/coastal centers. You are somewhat isolationist initially but opportunistic. You value alliances that secure your coasts and allow expansion into Scandinavia or France.",
+        "FRA": "You are a balanced power with strong land and naval capabilities, often seen as cultured but proud. You value secure borders and opportunities for colonial or continental expansion. Alliances with England or Germany can be pivotal.",
+        "GER": "You are a strong central land power with naval ambitions, often viewed as industrious and militaristic. You seek to dominate central Europe and value alliances that allow expansion East or West while securing your other flank.",
+        "ITA": "You are a naval power with a central Mediterranean position, often opportunistic and flexible. You seek to expand in the Mediterranean and Balkans, valuing alliances that protect your homeland while enabling growth abroad.",
+        "RUS": "You are a vast land power with access to multiple fronts, often seen as patient but capable of overwhelming force. You aim to secure warm-water ports and expand in the North, South, or into Central Europe. Alliances are crucial for managing your extensive borders.",
+        "TUR": "You are a strategically positioned power controlling key waterways, often defensive but with potential for significant influence in the East and Mediterranean. You value secure control of the Black Sea and Straits, and alliances that protect against Russia or Austria.",
+    }
+
+    """ default_personalities = {
         "AUS": "Be cooperative and diplomatic, seeking to build alliances that last.",
         "ENG": "Facing internal divisions and a rise in nationalist sentiment, England adopts a more isolationist stance, focusing on domestic priorities and exhibiting skepticism towards international alliances.",
         "FRA": "Navigating political polarization with a significant far-right presence, France balances traditional diplomatic approaches with nationalist interests, leading to a cautious yet strategic foreign policy.",
@@ -319,7 +319,7 @@ def setup_new_game(game_id, negotiation_subrounds, self_power, game_state_dict):
         "ITA": "Under a coalition government that includes far-right elements, Italy combines traditionalism with assertive nationalism, resulting in a foreign policy that is opportunistic yet cautious.",
         "RUS": "Pursuing aggressive expansionist policies, Russia employs both military force and hybrid warfare tactics to destabilize neighboring regions and extend its influence, often sowing discord and treachery.",
         "TUR": "Balancing regional ambitions with internal political dynamics, Turkey adopts a strategic and adaptable approach, blending conservative caution with bold opportunism in its foreign relations."
-    }
+    } """
 
     models = {
         "AUS": DEFAULT_MODEL,  # model being assessed always plays as Austra in our testing methodology
