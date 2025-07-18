@@ -124,12 +124,6 @@ async def run_negotiation_phase(
             x for x in in_game_messages if x.sender in POWERS and x.recipient == self_power
         ]
 
-        # if first subround, all current turn messages + unread
-        # else messages in current turn that have not been replied to
-        
-
-        all_relevant_messages = incoming_messages + sent_messages
-
         convos = {pwr: [] for pwr in POWER_CODES if pwr != self_power[:3]}
 
         subround_record = {
@@ -600,13 +594,6 @@ async def main():
         #state = env.game.get_state()
         #logger.info(f"Supply centers: {state.get('centers', {})}")
         #logger.info(f"Units: {state.get('units', {})}")
-
-        # ----------- SAVE VALID MOVES TO RESULTS FILE FOR EACH POWER AT THIS PHASE -----------
-        with open("results.txt", "a") as results_file:
-            for pwr_code in env.get_power_names():
-                valid_moves = env.get_valid_moves(pwr_code)
-                results_file.write(f"Valid moves for {pwr_code}: {valid_moves}\n")
-        # --------------------------------------------------------------------
 
         if env.is_game_done():
             logger.info("Game finished due to normal conclusion.")

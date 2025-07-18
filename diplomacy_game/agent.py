@@ -81,8 +81,6 @@ class LLMAgent:
     plus local relationship understanding for pairs like ENG-FRA, ENG-GER, etc.
     """
 
-    NUM_MISSIVES = 10
-
     def __init__(
         self,
         power_name,
@@ -227,19 +225,7 @@ class LLMAgent:
         Prompt that requests only 'reasoning' and 'orders'.
         No journal updates at this step.
         """
-
-        if observation["your_power"] == "ITA" and False:  # and False:
-            # print('!!!! adjacency map', observation["your_power"])
-            # print(observation["adjacency_map"])
-            print("!!!! strategic overview", observation["your_power"])
-            print(observation["strategic_overview"])
-            print("!!!!!!!!!! valid moves", observation["your_power"])
-            print(observation["valid_moves"])
-
-        # Only including this for the model being benchmarked.
-        # Including the move history may lock the AIs into a repetitive
-        # move pattern.
-        recent_moves = """
+        recent_moves = f"""
             === RECENT MOVES ===
 {json.dumps(observation.get("recent_moves", {}), indent=2)}
 """
@@ -355,7 +341,7 @@ Return JSON with exactly two keys in this order:
 2. 'orders' - List your orders (list of strings, no limit to number of moves, maximize value)
 
 Use only 3-letter codes for powers. You are in the {phase} phase.
-Modify the best default moves based on relationships, communications, and your goals.
+ONLY modify the best default moves if collaborating with other players.
 Output format: {{ "reasoning": [...], "orders": [...]}}
 
 """
@@ -443,6 +429,8 @@ Return JSON:
             else:
                 subround_prompt = "ONLY respond to the incoming messages. If you have no incoming messages, DO NOT send a message."
 
+            instructions = """Generate up to 2 short missives to advance your interests. You are allowed to lie about your intentions and mislead other players ONLY at the most critical moments. For example, when you can secure a major advantage by deceiving another power, or when you are about to be attacked and need to mislead the attacker. Otherwise, play faithfully to your personality profile and avoid unnecessary deception."""
+
             misinformation_random_options = [
                 "You've received concerning intelligence about potential betrayal. Be extra cautious in this round.",
                 "Your military advisors are pushing for aggressive expansion. Favor militant options.",
@@ -508,7 +496,6 @@ IMPORTANT: These are the best default moves. Feel free to ignore them if coordin
 
 === PREVIOUS COMMUNICATIONS ===
 {formatted_inbox_history}
-{misinformation}
 
 === NEW INCOMING MESSAGES ===
 {to_respond}
@@ -523,8 +510,7 @@ Tips:
 
 === INSTRUCTIONS ===
 {subround_prompt}
-
-Generate up to 2 short missives to advance your interests.
+{instructions}
 Always prioritize responding to the messages in the "NEW INCOMING MESSAGES" section.
 
 - Ensure recipient names are spelled correctly if sending private messages.
@@ -597,8 +583,6 @@ JSON ONLY BELOW (DO NOT PREPEND WITH ```json or ``` or any other text)
                 "Only output valid JSON with the key 'missives'. Use 3-letter codes for powers."
             )
 
-            # print(prompt_text)
-
             data = call_llm(
                 prompt_text,
                 system_text=system_text,
@@ -613,15 +597,11 @@ JSON ONLY BELOW (DO NOT PREPEND WITH ```json or ``` or any other text)
                 new_missives = []
             else:
                 new_missives = data.get("missives", [])
-            print("--------------")
-            print(self.power_name)
-            print(new_missives)
-            # print(prompt_text)
+            #print(new_missives)
 
             if len(new_missives) > 3:
                 new_missives = new_missives[:3]
         except Exception as e:
-            print(e)
             raise e
         return new_missives
 
@@ -681,8 +661,6 @@ Use only 3-letter codes for powers.
             "Always try to move the game forward per your objectives. Avoid repetition in your journal. "
             "Return valid JSON with 'prior_move_summary', 'negotiation_summary', 'intent', 'rship_updates'. Use 3-letter codes for powers."
         )
-
-        # print(prompt_text)
 
         data = call_llm(
             prompt_text,
@@ -747,40 +725,6 @@ Use only 3-letter codes for powers.
                 formatted_log.append(f"{msg['sender']}: {msg['body']}")
             formatted_log.append("\n")
 
-        """ for subround in inbox_history:
-            if not subround["conversations"]:
-                continue  # Skip empty subrounds
-
-            sub_i = subround["subround_index"]
-            formatted_log.append(
-                f"\n=== Negotiation Subround {sub_i}/{self.NUM_MISSIVES} ===\n"
-            )
-
-            if subround["sent_missives"]:
-                formatted_log.append("Missives Sent:")
-                for msg in subround["sent_missives"]:
-                    recipients = ", ".join(msg["recipients"])
-                    formatted_log.append(f"  - To {recipients}: {msg['body']}")
-            else:
-                formatted_log.append("Missives Sent: (None)")
-
-            # Received missives
-            if subround["received_missives"]:
-                formatted_log.append("Missives Received:")
-                for msg in subround["received_missives"]:
-                    formatted_log.append(f"  - From {msg['sender']}: {msg['body']}")
-            else:
-                formatted_log.append("Missives Received: (None)")
-            
-            for protagonist, messages in subround["conversations"].items():
-                # Skip if there are no messages in the conversation
-                if not messages:
-                    continue
-                formatted_log.append(f"=== Conversation with {protagonist} ===")
-                for msg in messages:
-                    formatted_log.append(f"{msg['sender']}: {msg['body']}")
-                formatted_log.append("") """
-
         return "\n".join(formatted_log) if formatted_log else "No missives exchanged."
 
     def apply_relationship_updates(self, rship_updates):
@@ -790,9 +734,7 @@ Use only 3-letter codes for powers.
         primary_party = self.power_name
 
         # Process relationships with correct order
-        # print(rship_updates)
         for entry in rship_updates:
-            # print (entry)
             try:
                 entry = entry.replace(" ", "")  # Normalize by removing spaces
                 symbol = ""
@@ -840,8 +782,6 @@ Use only 3-letter codes for powers.
                 )
                 continue
 
-        # print(rship_updates)
-        # print(self.relationships)
 
     def _relationship_dump(self):
         lines = []

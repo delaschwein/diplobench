@@ -17,7 +17,7 @@ from diplomacy.engine.message import Message
 load_dotenv()
 DEFAULT_MODEL = os.getenv("DEFAULT_AGENT_MODEL", "openai/gpt-4o-mini")
 TEST_MODEL = os.getenv("TEST_AGENT_MODEL", "openai/gpt-4o-mini")
-PRESUBMIT_SECOND = os.getenv("PRESUBMIT_SECOND", 40)
+PRESUBMIT_SECOND = os.getenv("PRESUBMIT_SECOND", 120)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ async def run_negotiation_phase(
     """
     negotiation_log_for_turn = {
         "turn_index": turn_index,
-        "phase": env.get_current_phase(),
+        "phase": mila_game.get_current_phase(),
         "subrounds": [],
         "final_summaries": {},
     }
@@ -145,8 +145,6 @@ async def run_negotiation_phase(
             "conversations": convos,
         }
 
-        print("to_respond: ", to_respond)
-
         if mila_game.powers[self_power].is_eliminated():
             sys.exit(0)
         
@@ -211,7 +209,7 @@ async def run_negotiation_phase(
             )
 
         cnt += 1
-        await asyncio.sleep(30)
+        await asyncio.sleep(20)
 
     # Final negotiation summary
     final_inbox_snapshot = {p: inbox[p][:] for p in inbox}
@@ -247,11 +245,11 @@ async def run_negotiation_phase(
         )
 
         agents[pwr].journal.append(
-            f"{env.get_current_phase()} Negotiation summary: {summary}"
+            f"{mila_game.get_current_phase()} Negotiation summary: {summary}"
         )
         if intent:
             agents[pwr].journal.append(
-                f"{env.get_current_phase()} Intent going forward: {intent}"
+                f"{mila_game.get_current_phase()} Intent going forward: {intent}"
             )
         agents[pwr].apply_relationship_updates(rship_updates)
         negotiation_log_for_turn["final_summaries"][pwr] = {
@@ -500,14 +498,14 @@ async def main():
     turn_count = 0
     year_count = 0
 
-    current_phase = env.get_current_phase()
+    current_phase = mila_game.get_current_phase()
 
     last_received_timestamp = -1
 
     while not env.done:
         # Check if eliminated
         if mila_game.powers[args.power].is_eliminated():
-            logger.info(f"{args.power} has been eliminated. Ending the game.")
+            logger.info(f"{args.power} has been eliminated.")
             break
 
         rl_recommendations = {}
@@ -524,7 +522,7 @@ async def main():
             do_nothing = False
 
             mila_phase = mila_game_state["name"]
-            logging.info(f"Advance to: {mila_phase}")
+            logging.info(f"Mila advance to: {mila_phase}")
 
             # sync order from network game
             if mila_game.order_history and mila_game.order_history.last_value():
@@ -536,14 +534,11 @@ async def main():
                         power_abbr, orders
                     )  # resetting env orders, without mapping/valid order check
                 env.step()
-                logger.info(
-                    f"Processed {mila_phase}"
-                )
 
             orderable_units = mila_game_state["state"]["units"]  # maybe useful
 
         if do_nothing:
-            logger.info(f"Wait until new phase...")
+            logger.info("Wait until new phase...")
             await asyncio.sleep(5)
             continue
 
@@ -553,7 +548,7 @@ async def main():
             and len(orderable_units[args.power])
         ):
             # retrieve orders from network game
-            await mila_game.synchronize()
+            gameDataInfo = await mila_game.synchronize()
             pseudo_orders = mila_game.get_orders(power_name=args.power)
             if pseudo_orders and len(pseudo_orders):
                 mila_self_orders = pseudo_orders
@@ -572,37 +567,15 @@ async def main():
 
         rl_recommendations[args.power[:3].upper()] = pseudo_orders
 
-        # for pwr in POWER_CODES:
-        #    rl_recommendations[pwr] = recommendation_engine.get_recommendations(env.game, pwr)
-        #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #print(rl_recommendations)
-        #print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
         if current_phase.startswith("S"):
             year_count += 1
-            logger.info(f"\n====== YEAR {year_count} ======")
             turn_count += 1
 
-        #logger.info(f"\n=== PHASE: {current_phase} ===")
-
-        #logger.info("Current game state:")
-        state = env.game.get_state()
-        #logger.info(f"Supply centers: {state.get('centers', {})}")
-        #logger.info(f"Units: {state.get('units', {})}")
-
-        # ----------- SAVE VALID MOVES TO RESULTS FILE FOR EACH POWER AT THIS PHASE -----------
-        with open("results.txt", "a") as results_file:
-            for pwr_code in env.get_power_names():
-                valid_moves = env.get_valid_moves(pwr_code)
-                results_file.write(f"Valid moves for {pwr_code}: {valid_moves}\n")
-        # --------------------------------------------------------------------
 
         issued_orders = {}  # Track LLM-generated orders
         order_maps = {}  # Track how each order was normalized
         accepted_orders = {}  # Track what the engine actually accepted
 
-        # might has messages from prev movement
-        # add to negotiation history
         if last_received_timestamp > -1:
             messages_until_last_movement = []
             for k, v in mila_game.message_history.reversed_items():
@@ -621,7 +594,6 @@ async def main():
         if phase_type == "M":
             logger.info("=== MOVEMENT PHASE ===")
             if args.negotiate:
-                logger.info("Starting negotiation rounds...")
                 try:
                     negotiation_log, last_msg_timestamp = await run_negotiation_phase(
                         env,
@@ -639,13 +611,11 @@ async def main():
                     logger.error(f"Error during negotiation phase: {e}")
                     continue
 
-            logger.info("Collecting movement orders from all powers...")
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future_orders_map = {}
                 for power_code, agent in agents.items():
                     engine_power = env.game.powers[agent.get_engine_power_name()]
                     if engine_power.is_eliminated():
-                        logger.info(f"{power_code} is eliminated, skipping orders.")
                         continue
                     obs = env.get_observation_for_power(power_code)
                     obs["rl_recommendations"] = rl_recommendations
@@ -656,7 +626,6 @@ async def main():
                     pwr = future_orders_map[fut]
                     try:
                         reasoning, orders = fut.result()
-                        logger.info(f"Orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
 
@@ -700,7 +669,6 @@ async def main():
                     pwr = future_orders_map[fut]
                     try:
                         reasoning, orders = fut.result()
-                        logger.info(f"Orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
 
@@ -712,18 +680,12 @@ async def main():
 
                         do_nothing = True  # do nothing after orders are issued
 
-                        # agent = agents[pwr]
-                        # new_journal = agent.journal_after_orders(reasoning, orders, obs)
-                        # agent.journal.extend(new_journal)
-
                     except Exception as e:
                         logger.error(f"Error getting orders from {pwr}: {e}")
 
         # Winter adjustment phase
         elif phase_type == "A":
             logger.info("=== WINTER ADJUSTMENT PHASE ===")
-            scores = env.compute_score()
-            logger.info(f"Current supply center counts: {scores}")
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future_orders_map = {}
@@ -751,7 +713,6 @@ async def main():
                     pwr = future_orders_map[fut]
                     try:
                         reasoning, orders = fut.result()
-                        logger.info(f"Adjustment orders from {pwr}: {orders}")
                         issued_orders[pwr] = orders
                         mappings, valid_orders = env.set_orders(pwr, orders)
                         mila_game.set_orders(
@@ -811,7 +772,8 @@ async def main():
                         logger.info(f"  {raw_order} -> {normalized} ({status})")
 
             logger.info(f"\n[DEBUG] Full issued orders: {issued_orders}")
-            logger.info(f"[DEBUG] Full accepted orders: {engine_accepted_orders}")
+            # last phase orders
+            #logger.info(f"[DEBUG] Full accepted orders: {engine_accepted_orders}")
 
         # Log the results
         # scores = env.compute_score()
@@ -826,7 +788,6 @@ async def main():
     # final_scores = env.compute_score()
     # logger.info(f"Final Scores: {final_scores}")
     # save_game_state(args.game_id, env, agents)
-    logger.info("Done.")
 
 
 def run():

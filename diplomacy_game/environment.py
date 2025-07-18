@@ -125,10 +125,7 @@ class DiplomacyEnvironment:
         self.done = False
 
         if game_state_dict:
-            logger.info("Loading existing game state...")
             self.game.set_state(game_state_dict)
-        else:
-            logger.info("Starting a new game...")
 
         self._build_connectivity_graphs()
         self.debug_connectivity()
@@ -266,13 +263,9 @@ class DiplomacyEnvironment:
         # Print some summary stats
         total_nodes = len(self.connectivity.nodes())
         edges_list = list(self.connectivity.edges())
-        print(f"Graph has {total_nodes} territories (nodes).")
-        print(f"Total edges: {len(edges_list)}")
 
         army_edges = sum(1 for _, _, types in edges_list if "A" in types)
         fleet_edges = sum(1 for _, _, types in edges_list if "F" in types)
-        print(f"Army connections: {army_edges}")
-        print(f"Fleet connections: {fleet_edges}")
 
     def debug_connectivity(self):
         """
@@ -293,20 +286,6 @@ class DiplomacyEnvironment:
             else:  # e.g. ['A','F']
                 army_and_fleet.append((node1, node2))
 
-        print("=== ARMY-ONLY EDGES (first 10) ===")
-        for e in army_only[:10]:
-            print("   ", e)
-        print(f"Total Army-only edges: {len(army_only)}")
-
-        print("\n=== FLEET-ONLY EDGES (first 10) ===")
-        for e in fleet_only[:10]:
-            print("   ", e)
-        print(f"Total Fleet-only edges: {len(fleet_only)}")
-
-        print("\n=== ARMY+FLEET EDGES (first 10) ===")
-        for e in army_and_fleet[:10]:
-            print("   ", e)
-        print(f"Total Army+Fleet edges: {len(army_and_fleet)}")
 
         # 2) Sample adjacency checks for known territories
         known_pairs = [
@@ -317,25 +296,18 @@ class DiplomacyEnvironment:
             ("BUL", "BUL"),  # Checking if a territory loops to itself, likely not
         ]
 
-        print("\n=== KNOWN PAIRS UNIT ALLOWANCE ===")
         for t1, t2 in known_pairs:
             if t1 in self.connectivity.graph and t2 in self.connectivity.graph[t1]:
                 allowed_units = self.connectivity.get_allowed_units(t1, t2)
-                print(f"  {t1} -> {t2}: {allowed_units}")
-            else:
-                print(f"  {t1} -> {t2}: No direct edge found")
 
         # 3) Example: for a single territory, show all its neighbors split by unit type
         territory_to_check = "PAR"
         if territory_to_check in self.connectivity.graph:
-            print(f"\n=== NEIGHBORS OF {territory_to_check} ===")
             for neighbor in sorted(self.connectivity.get_adjacent(territory_to_check)):
                 allowed = self.connectivity.get_allowed_units(
                     territory_to_check, neighbor
                 )
-                print(f"   {territory_to_check} -> {neighbor}, units = {allowed}")
-        else:
-            print(f"\n{territory_to_check} is not in the graph?!")
+
 
     def get_current_phase(self):
         return self.game.get_current_phase()
@@ -346,7 +318,7 @@ class DiplomacyEnvironment:
     def step(self):
         """Process the current phase and return what type of phase we end up in."""
         current_phase = self.game.get_current_phase()
-        logger.info(f"Processing phase: {current_phase}")
+        logger.info(f"Processing diplobench phase: {current_phase}")
 
         # Capture centers before
         centers_before = {}
@@ -411,6 +383,7 @@ class DiplomacyEnvironment:
         self.phase_outcomes = self.phase_outcomes[-5:]  # keep at most 5
 
         new_phase = self.game.get_current_phase()
+        logger.info(f"New diplobench phase: {new_phase}")
         return new_phase
 
     def get_power_names(self):
@@ -442,7 +415,6 @@ class DiplomacyEnvironment:
         for phase_data in recent_phases:
             phase_name = phase_data.name
             if not phase_data.orders:
-                print("!! No orders recorded")
                 continue
 
             moves = {}
@@ -612,8 +584,6 @@ class DiplomacyEnvironment:
                 possible_moves.add(f"{unit} D")  # Disband option
                 valid_moves[unit] = sorted(possible_moves)
             valid_moves = self.validate_moves(power_name, valid_moves)
-            print("valid retreat moves for", power_name)
-            print(valid_moves)
             return valid_moves
 
         elif phase_type == "A":
@@ -652,9 +622,7 @@ class DiplomacyEnvironment:
                     )  # Splits e.g. "A PAR" into "A" and "PAR"
                     disband_moves.add(f"R {unit}")  # or could use REMOVE instead of R
                 valid_moves["DISBANDS"] = sorted(disband_moves)
-            print(valid_moves)
             # valid_moves = self.validate_moves(power_name, valid_moves)
-            print(valid_moves)
             return valid_moves
 
         else:
